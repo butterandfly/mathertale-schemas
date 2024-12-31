@@ -1,3 +1,3 @@
-# Journey2Realm
+# Mathertale Schemas
 
-A tool to convert Obsidian Canvas journey files to Realm database.
+The schema project for Mathertale.
