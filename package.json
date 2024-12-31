@@ -1,8 +1,5 @@
 {
-  "dependencies": {
-    "chalk": "^4.1.2",
-    "ora": "^5.4.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.2",
@@ -17,19 +14,16 @@
     "dev": "tsc --watch",
     "prepare": "husky"
   },
-  "bin": {
-    "journey2realm": "dist/bin/cli.js"
-  },
-  "name": "journey2realm",
-  "version": "0.1.2",
+  "name": "mathertale-schemas",
+  "version": "0.1.0",
+  "description": "Schema definitions and utilities for Mathertale canvas files",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/butterandfly/journey2realm.git"
+    "url": "git+https://github.com/butterandfly/mathertale-schemas.git"
   },
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "files": [
-    "dist/src",
-    "dist/bin"
+    "dist/src"
   ]
 }

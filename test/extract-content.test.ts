@@ -3,12 +3,11 @@ import {
   convertBlockNode, 
   convertSectionNode, 
   convertQuestNode, 
-  convertQuestFile,
-  convertSingleChoice
+  convertSingleChoice,
+  findQuestCanvasesInJourney
 } from '../src/extract-content';
 import { BlockType, FactType, QuestionType } from '../src/schemas';
-import * as fs from 'fs';
-jest.mock('fs');
+import { CanvasData } from '../src/node-validator';
 
 describe('findQuestNode', () => {
   it('should find the quest node in the canvas data', () => {
@@ -360,5 +359,64 @@ b: Choice B`;
     expect(result.choices).toEqual({});
     expect(result.answer).toBe('');
     expect(result.explanation).toBe('');
+  });
+});
+
+describe('findQuestCanvasesInJourney', () => {
+  it('should find all quest canvases in journey', () => {
+    const journeyCanvas: CanvasData = {
+      nodes: [
+        {
+          id: "journey1",
+          type: "text",
+          text: "#journey Journey 1 ^00000000-0000-0000-0000-000000000001",
+        },
+        {
+          id: "quest1",
+          type: "file",
+          file: "test/quest1.quest.canvas",
+        },
+        {
+          id: "quest2",
+          type: "file",
+          file: "test/quest2.quest.canvas",
+        },
+        {
+          id: "other",
+          type: "file",
+          file: "test/other.md",
+        }
+      ],
+      edges: []
+    };
+
+    const questCanvases = findQuestCanvasesInJourney(journeyCanvas);
+    
+    expect(questCanvases).toEqual([
+      'test/quest1.quest.canvas',
+      'test/quest2.quest.canvas'
+    ]);
+  });
+
+  it('should return empty array when no quest canvases found', () => {
+    const journeyCanvas: CanvasData = {
+      nodes: [
+        {
+          id: "journey1",
+          type: "text",
+          text: "#journey Journey 1 ^00000000-0000-0000-0000-000000000001",
+        },
+        {
+          id: "other",
+          type: "file",
+          file: "test/journey1.journey.canvas",
+        }
+      ],
+      edges: []
+    };
+
+    const questCanvases = findQuestCanvasesInJourney(journeyCanvas);
+    
+    expect(questCanvases).toEqual([]);
   });
 });

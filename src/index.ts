@@ -1,10 +1,10 @@
 export { 
-    convertJourneyFile,
-    convertQuestFile,
+    convertQuest,
     convertQuestNode,
     convertSectionNode,
     convertBlockNode,
-    convertQuestCanvas
+    findQuestCanvasesInJourney,
+    convertJourney,
 } from './extract-content';
 
 export {

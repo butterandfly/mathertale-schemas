@@ -19,12 +19,6 @@ import {
   SingleChoiceQuestionDataSchema
 } from './schemas';
 
-import fs from 'fs';
-
-interface JourneyResult {
-  journey: JourneySchema;
-  quests: QuestSchema[];
-}
 
 export function convertBlockNode(blockNode: CanvasNode): BlockSchema {
   if (!blockNode.text) {
@@ -255,21 +249,13 @@ export function findQuestNode(canvasData: CanvasData): CanvasNode | undefined {
   });
 }
 
-export function convertQuestFile(questFilePath: string): QuestSchema {
-  const questCanvasData: CanvasData = JSON.parse(fs.readFileSync(questFilePath, 'utf8'));
-  const questNode = findQuestNode(questCanvasData);
-  if (!questNode) {
-    throw new Error('Quest node not found in file: ' + questFilePath);
-  }
-  return convertQuestNode(questNode, questCanvasData);
-}
-
-export function convertJourneyFile(journeyFile: string): JourneyResult {
-  const journeyCanvasData: CanvasData = JSON.parse(fs.readFileSync(journeyFile, 'utf8'));
-
+export function convertJourney(
+  journeyCanvasData: CanvasData, 
+  questMap: Record<string, QuestSchema>
+): JourneySchema {
   const journeyNode = findJourneyNode(journeyCanvasData);
   if (!journeyNode) {
-    throw new Error('Journey node not found in file: ' + journeyFile);
+    throw new Error('Journey node not found in canvas data');
   }
 
   if (!journeyNode.text) {
@@ -289,29 +275,25 @@ export function convertJourneyFile(journeyFile: string): JourneyResult {
 
   const desc = lines.slice(1).join('\n').trim();
 
-  const questMapWithNodeId: Record<string, QuestSchema> = {};
-  const quests: QuestSchema[] = [];
+  const questSummaryMap: Record<string, QuestSummarySchema> = {};
 
+  // 遍历所有文件类型的节点，通过 file 属性查找对应的 quest
   journeyCanvasData.nodes.forEach(node => {
     if (node.type === 'file' && node.file) {
-      const quest = convertQuestFile(node.file);
-      questMapWithNodeId[node.id] = quest;
-      quests.push(quest);
+      const quest = questMap[node.file];
+      if (quest) {
+        questSummaryMap[node.id] = {
+          questId: quest.id,
+          name: quest.name,
+          desc: quest.desc,
+          dependencies: [],
+          children: []
+        };
+      }
     }
   });
 
-  const questSummaryMap: Record<string, QuestSummarySchema> = {};
-
-  Object.values(questMapWithNodeId).forEach(quest => {
-    questSummaryMap[quest.id] = {
-      questId: quest.id,
-      name: quest.name,
-      desc: quest.desc,
-      dependencies: [],
-      children: []
-    };
-  });
-
+  // 处理依赖关系
   journeyCanvasData.edges.forEach(edge => {
     if (edge.fromSide === 'bottom' && edge.toSide === 'top') {
       const fromNode = journeyCanvasData.nodes.find(n => n.id === edge.fromNode);
@@ -322,27 +304,22 @@ export function convertJourneyFile(journeyFile: string): JourneyResult {
       }
 
       if (fromNode?.type === 'file' && toNode?.type === 'file') {
-        const fromQuest = questMapWithNodeId[fromNode.id];
-        const toQuest = questMapWithNodeId[toNode.id];
+        const fromQuestSummary = questSummaryMap[fromNode.id];
+        const toQuestSummary = questSummaryMap[toNode.id];
 
-        if (fromQuest && toQuest) {
-          questSummaryMap[fromQuest.id].children.push(toQuest.id);
-          questSummaryMap[toQuest.id].dependencies.push(fromQuest.id);
+        if (fromQuestSummary && toQuestSummary) {
+          fromQuestSummary.children.push(toQuestSummary.questId);
+          toQuestSummary.dependencies.push(fromQuestSummary.questId);
         }
       }
     }
   });
 
-  const journey: JourneySchema = {
+  return {
     id,
     name,
     desc,
     questSummaries: Object.values(questSummaryMap),
-  };
-
-  return {
-    journey,
-    quests
   };
 }
 
@@ -364,11 +341,26 @@ export function findNextBlockNode(currentNode: CanvasNode, canvasData: CanvasDat
   return edge ? canvasData.nodes.find(node => node.id === edge.toNode) || null : null;
 }
 
-export function convertQuestCanvas(canvasData: CanvasData): QuestSchema {
+export function convertQuest(canvasData: CanvasData): QuestSchema {
   const questNode = findQuestNode(canvasData);
   if (!questNode) {
     throw new Error('Quest node not found in canvas data');
   }
   return convertQuestNode(questNode, canvasData);
+}
+
+/**
+ * 从Journey画布数据中查找所有quest画布文件的路径
+ * @param journeyCanvas Journey画布数据
+ * @returns quest画布文件路径数组
+ */
+export function findQuestCanvasesInJourney(journeyCanvas: CanvasData): string[] {
+  return journeyCanvas.nodes
+    .filter(node => 
+      node.type === 'file' && 
+      node.file && 
+      node.file.endsWith('.quest.canvas')
+    )
+    .map(node => node.file as string);
 }
 

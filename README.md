@@ -1,3 +1,3 @@
-# Mathertale Schemas
+# mathertale-schemas
 
-The schema project for Mathertale.
+Schema definitions and utilities for Mathertale canvas files.
