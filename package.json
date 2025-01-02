@@ -14,7 +14,7 @@
     "prepare": "husky install"
   },
   "name": "mathertale-schemas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Schema definitions and utilities for Mathertale canvas files",
   "repository": {
     "type": "git",
