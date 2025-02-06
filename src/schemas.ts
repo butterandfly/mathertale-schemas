@@ -1,71 +1,70 @@
-export enum BlockType {
-    MD = 'md',
-    DEFINITION = 'definition',
-    FACT = 'fact',
-    QUESTION = 'question',
-    REMARK = 'remark',
-}
-
-export enum FactType {
-    FACT = 'fact',
-    AXIOM = 'axiom',
-    THEOREM = 'theorem',
-    COROLLARY = 'corollary',
-    LEMMA = 'lemma',
-    PROPOSITION = 'proposition',
-    CONJECTURE = 'conjecture',
-}
-
-export enum QuestionType {
-    SINGLE_CHOICE = 'single_choice',
-    MULTIPLE_CHOICE = 'multiple_choice',
-    TRUE_FALSE = 'true_false',
-}
 
 export interface BlockSchema {
     id: string;
     content: string;
-    blockType: string;
-    modifiedAt: Date;
+    type: string;
     name?: string;
-    factType?: string;
-    questionType?: string;
-    questionData?: string;
+    questionData?: any;
+    updatedAt?: Date;
 }
 
 export interface SectionSchema {
-    id: string;
-    blocks: BlockSchema[];
     name: string;
-    desc: string;
-    modifiedAt: Date;
+    blocks: BlockSchema[];
+}
+
+export enum Category {
+    FOUNDATIONAL = 'Foundational Mathematics',
+    ANALYSIS = 'Analysis',
+    ALGEBRA = 'Algebra',
+    PROBABILITY = 'Probability and Statistics'
 }
 
 export interface QuestSchema {
+    // 基础信息
     id: string;
     name: string;
+    desc: string;
+    category?: Category;
+  
+    updatedAt: Date;
+    
+    // 任务内容
+    blockCount: number;
+  
+    // 依赖关系
+    dependentQuests: string[];
+    childQuests: string[];
+  
+    // sections
     sections: SectionSchema[];
-    modifiedAt: Date;
-    desc: string;
-}
+  }
 
-export interface QuestSummarySchema {
-    questId: string;
-    name: string;
-    desc: string;
-    dependencies: string[];
-    children: string[];
-}
+export type QuestShortSchema = Omit<QuestSchema, 'sections'>;
+
+export type DevStatus = 
+  | 'in_development'
+  | 'coming_soon'
+  | 'available'; 
 
 export interface JourneySchema {
-    id: string;
-    name: string;
-    desc: string;
-    questSummaries: QuestSummarySchema[];
+  id: string;
+  name: string;
+  category: Category;
+  desc: string;
+  coverUrl?: string;
+  tags?: string[];
+
+  questCount: number;
+  devStatus: DevStatus;
+
+  updatedAt: Date;
+  createdAt: Date;
+
+  questShortMap: Record<string, QuestShortSchema>;
 }
 
 export interface SingleChoiceQuestionDataSchema {
-    questionContent: string;
     choices: { [key: string]: string };
     answer: string;
     explanation: string;

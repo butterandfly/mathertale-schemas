@@ -1,3 +1,5 @@
+import { BlockSchema } from './schemas';
+
 export const MARKED_NODE_TAGS = {
   structural: [
     'journey',
@@ -32,11 +34,20 @@ export interface CanvasData {
   edges: CanvasEdge[];
 }
 
+export interface RawData {
+  id: string;
+  tag: string;
+  name?: string;
+  rawContent: string;
+}
+
 export interface Metadata {
   tag: string;
   name: string;
   id: string;
 }
+
+export type BlockNodeConverter = (rawData: RawData) => BlockSchema;
 
 export type MarkedNodeType = 'structural' | 'block';
 export type NodeType = MarkedNodeType | 'plain';

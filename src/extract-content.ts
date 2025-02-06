@@ -1,23 +1,30 @@
+import { convertDefinitionBlockNode, convertFactBlockNode, convertPropositionBlockNode, convertRemarkBlockNode, convertTheoremBlockNode } from './blocks/noted-block';
+import { convertParaBlockNode } from './blocks/para-block';
+import { convertSingleChoiceBlockNode } from './blocks/single-choice-block';
 import {
   CanvasNode,
-  CanvasEdge,
   CanvasData,
-  Metadata,
   getMetadata,
-  isValidUUID
+  RawData,
+  BlockNodeConverter
 } from './node-validator';
 
 import {
-  BlockType,
-  FactType,
-  QuestionType,
   BlockSchema,
   SectionSchema,
   QuestSchema,
   JourneySchema,
-  QuestSummarySchema,
-  SingleChoiceQuestionDataSchema
 } from './schemas';
+
+const tagBlockMap: Record<string, BlockNodeConverter> = {
+  'para': convertParaBlockNode,
+  'definition': convertDefinitionBlockNode,
+  'fact': convertFactBlockNode,
+  'theorem': convertTheoremBlockNode,
+  'proposition': convertPropositionBlockNode,
+  'remark': convertRemarkBlockNode,
+  'single_choice': convertSingleChoiceBlockNode
+}
 
 
 export function convertBlockNode(blockNode: CanvasNode): BlockSchema {
@@ -34,126 +41,23 @@ export function convertBlockNode(blockNode: CanvasNode): BlockSchema {
 
   const content = text.split('\n').slice(1).join('\n').trim();
 
-  const block: BlockSchema = {
-    name,
+  const rawData: RawData = {
     id,
-    content,
-    blockType: BlockType.MD,
-    modifiedAt: new Date()
-  };
-
-  switch (tag) {
-    case 'definition':
-      block.blockType = BlockType.DEFINITION;
-      break;
-    case 'theorem':
-      block.blockType = BlockType.FACT;
-      block.factType = FactType.THEOREM;
-      break;
-    case 'fact':
-      block.blockType = BlockType.FACT;
-      block.factType = FactType.FACT;
-      break;
-    case 'single_choice':
-      block.blockType = BlockType.QUESTION;
-      block.questionType = QuestionType.SINGLE_CHOICE;
-      const questionData = convertSingleChoice(content);
-      block.questionData = JSON.stringify(questionData);
-      break;
-    case 'para':
-      block.blockType = BlockType.MD;
-      break;
-    case 'remark':
-      block.blockType = BlockType.REMARK;
-      break;
+    tag,
+    name,
+    rawContent: content
   }
 
+  if (!tagBlockMap[tag]) {
+    throw new Error('Invalid block tag: ' + tag);
+  }
+
+  const block = tagBlockMap[tag](rawData);
+  
   return block;
 }
 
-/**
- * 将单选题的文本内容转换为结构化数据
- * 
- * 输入文本格式示例：
- * ```
- * This is the question content.
- * It can have multiple lines and LaTeX content like $x^2$.
- * 
- * choice:
- * a: First choice with $\alpha$
- * b: Second choice with $\beta$
- * c: Third choice with $\gamma$
- * 
- * answer:
- * b
- * 
- * explanation:
- * This is the explanation.
- * It can also have multiple lines and LaTeX content.
- * ```
- * 
- * 注意：
- * 1. 内容中的关键字（choice:, answer:, explanation:）必须独占一行
- * 2. 关键字的顺序可以任意
- * 3. 每个部分都支持多行文本和LaTeX内容
- * 4. 选项格式必须为 "字母: 选项内容"
- */
-export function convertSingleChoice(text: string): SingleChoiceQuestionDataSchema {
-  const result: SingleChoiceQuestionDataSchema = {
-    questionContent: '',
-    choices: {},
-    answer: '',
-    explanation: ''
-  };
 
-  // 定义所有可能的关键字
-  const keywords = ['choice:', 'answer:', 'explanation:'];
-  
-  // 将文本分割成行
-  const lines = text.split('\n');
-  
-  // 找到所有关键字的行号
-  const keywordPositions: { keyword: string; lineIndex: number }[] = [];
-  lines.forEach((line, index) => {
-    const keyword = keywords.find(k => line.trim() === k);
-    if (keyword) {
-      keywordPositions.push({ keyword, lineIndex: index });
-    }
-  });
-  
-  // 按行号排序
-  keywordPositions.sort((a, b) => a.lineIndex - b.lineIndex);
-  
-  // 处理题目内容（从开始到第一个关键字）
-  const firstKeywordLine = keywordPositions[0]?.lineIndex ?? lines.length;
-  result.questionContent = lines.slice(0, firstKeywordLine).join('\n').trim();
-  
-  // 处理每个关键字部分
-  keywordPositions.forEach((pos, index) => {
-    const startLine = pos.lineIndex + 1;
-    const endLine = keywordPositions[index + 1]?.lineIndex ?? lines.length;
-    const content = lines.slice(startLine, endLine).join('\n').trim();
-    
-    switch (pos.keyword) {
-      case 'choice:':
-        content.split('\n').forEach(line => {
-          const [key, value] = line.split(':').map(s => s.trim());
-          if (key && value) {
-            result.choices[key] = value;
-          }
-        });
-        break;
-      case 'answer:':
-        result.answer = content;
-        break;
-      case 'explanation:':
-        result.explanation = content;
-        break;
-    }
-  });
-
-  return result;
-}
 
 export function convertSectionNode(sectionNode: CanvasNode, canvasData: CanvasData): SectionSchema {
   if (!sectionNode.text) {
@@ -209,8 +113,9 @@ export function convertQuestNode(questNode: CanvasNode, canvasData: CanvasData):
     name,
     id,
     desc: lines.slice(1).join('\n'),
+    blockCount: 0,
     sections: [],
-    modifiedAt: new Date()
+    updatedAt: new Date()
   };
 
   let currentSectionNode = findNextSectionNode(questNode, canvasData);
