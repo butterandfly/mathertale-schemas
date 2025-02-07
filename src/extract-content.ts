@@ -1,6 +1,7 @@
 import { convertDefinitionBlockNode, convertFactBlockNode, convertPropositionBlockNode, convertRemarkBlockNode, convertTheoremBlockNode } from './blocks/noted-block';
 import { convertParaBlockNode } from './blocks/para-block';
 import { convertSingleChoiceBlockNode } from './blocks/single-choice-block';
+import { convertRawContent } from './convert-helper';
 import {
   CanvasNode,
   CanvasData,
@@ -14,6 +15,9 @@ import {
   SectionSchema,
   QuestSchema,
   JourneySchema,
+  QuestShortSchema,
+  Category,
+  DevStatus,
 } from './schemas';
 
 const tagBlockMap: Record<string, BlockNodeConverter> = {
@@ -77,10 +81,7 @@ export function convertSectionNode(sectionNode: CanvasNode, canvasData: CanvasDa
 
   const section: SectionSchema = {
     name,
-    id,
-    desc: lines.slice(1).join('\n'),
     blocks: [],
-    modifiedAt: new Date()
   };
 
   let currentBlockNode = findNextBlockNode(sectionNode, canvasData);
@@ -93,40 +94,7 @@ export function convertSectionNode(sectionNode: CanvasNode, canvasData: CanvasDa
   return section;
 }
 
-export function convertQuestNode(questNode: CanvasNode, canvasData: CanvasData): QuestSchema {
-  if (!questNode.text) {
-    throw new Error('Quest text is required');
-  }
 
-  const lines = questNode.text.split('\n');
-  const firstLine = lines[0];
-  const {tag, name, id} = getMetadata(firstLine);
-  if (!id) {
-    throw new Error('Quest id is required: ' + firstLine);
-  }
-
-  if (tag !== 'quest') {
-    throw new Error('Invalid quest tag: ' + tag);
-  }
-
-  const quest: QuestSchema = {
-    name,
-    id,
-    desc: lines.slice(1).join('\n'),
-    blockCount: 0,
-    sections: [],
-    updatedAt: new Date()
-  };
-
-  let currentSectionNode = findNextSectionNode(questNode, canvasData);
-  while (currentSectionNode) {
-    const section = convertSectionNode(currentSectionNode, canvasData);
-    quest.sections.push(section);
-    currentSectionNode = findNextSectionNode(currentSectionNode, canvasData);
-  }
-
-  return quest;
-}
 
 function findJourneyNode(canvasData: CanvasData): CanvasNode | undefined {
   return canvasData.nodes.find(node => {
@@ -154,7 +122,13 @@ export function findQuestNode(canvasData: CanvasData): CanvasNode | undefined {
   });
 }
 
-export function convertJourney(
+/**
+ * Convert a journey canvas to a journey schema.
+ * @param journeyCanvasData Journey canvas data
+ * @param questMap Quest map
+ * @returns Journey schema
+ */
+export function convertJourneyCanvas(
   journeyCanvasData: CanvasData, 
   questMap: Record<string, QuestSchema>
 ): JourneySchema {
@@ -178,21 +152,45 @@ export function convertJourney(
     throw new Error('Journey name is required: ' + journeyNode.text);
   }
 
-  const desc = lines.slice(1).join('\n').trim();
+  const rawContent = lines.slice(1).join('\n').trim();
+  const {content: desc, category, devStatus} = convertRawContent(rawContent, ['category:', 'devStatus:']);
 
-  const questSummaryMap: Record<string, QuestSummarySchema> = {};
+  const categoryMap: Record<string, Category> = {
+    'foundational': Category.FOUNDATIONAL,
+    'analysis': Category.ANALYSIS,
+    'algebra': Category.ALGEBRA,
+    'probability': Category.PROBABILITY
+  }
+
+  if (!categoryMap[category]) {
+    throw new Error('Invalid category: ' + category);
+  }
+  
+  const devStatusMap: Record<string, DevStatus> = {
+    'in_development': 'in_development',
+    'coming_soon': 'coming_soon',
+    'available': 'available'
+  }
+
+  if (!devStatusMap[devStatus]) {
+    throw new Error('Invalid dev status: ' + devStatus);
+  }
+
+  const questShortMap: Record<string, QuestShortSchema> = {};
 
   // 遍历所有文件类型的节点，通过 file 属性查找对应的 quest
   journeyCanvasData.nodes.forEach(node => {
     if (node.type === 'file' && node.file) {
       const quest = questMap[node.file];
       if (quest) {
-        questSummaryMap[node.id] = {
-          questId: quest.id,
+        questShortMap[node.id] = {
+          id: quest.id,
           name: quest.name,
           desc: quest.desc,
-          dependencies: [],
-          children: []
+          dependentQuests: [],
+          childQuests: [],
+          updatedAt: quest.updatedAt,
+          blockCount: quest.blockCount
         };
       }
     }
@@ -209,12 +207,12 @@ export function convertJourney(
       }
 
       if (fromNode?.type === 'file' && toNode?.type === 'file') {
-        const fromQuestSummary = questSummaryMap[fromNode.id];
-        const toQuestSummary = questSummaryMap[toNode.id];
+        const fromQuestShort = questShortMap[fromNode.id];
+        const toQuestShort = questShortMap[toNode.id];
 
-        if (fromQuestSummary && toQuestSummary) {
-          fromQuestSummary.children.push(toQuestSummary.questId);
-          toQuestSummary.dependencies.push(fromQuestSummary.questId);
+        if (fromQuestShort && toQuestShort) {
+          fromQuestShort.childQuests.push(toQuestShort.id);
+          toQuestShort.dependentQuests.push(fromQuestShort.id);
         }
       }
     }
@@ -224,10 +222,17 @@ export function convertJourney(
     id,
     name,
     desc,
-    questSummaries: Object.values(questSummaryMap),
+    questShortMap,
+    category: categoryMap[category],
+    questCount: journeyCanvasData.nodes.filter(node => node.type === 'quest').length,
+    devStatus: devStatusMap[devStatus],
+    updatedAt: new Date(),
+    createdAt: new Date()
   };
 }
 
+// Find the next section node.
+// The current node should be a section node or a quest node.
 export function findNextSectionNode(currentNode: CanvasNode, canvasData: CanvasData): CanvasNode | null {
   const edge = canvasData.edges.find(edge => 
     edge.fromNode === currentNode.id && 
@@ -237,6 +242,8 @@ export function findNextSectionNode(currentNode: CanvasNode, canvasData: CanvasD
   return edge ? canvasData.nodes.find(node => node.id === edge.toNode) || null : null;
 }
 
+// Find the next block node.
+// The current node should be a block node or a section node.
 export function findNextBlockNode(currentNode: CanvasNode, canvasData: CanvasData): CanvasNode | null {
   const edge = canvasData.edges.find(edge => 
     edge.fromNode === currentNode.id && 
@@ -246,20 +253,13 @@ export function findNextBlockNode(currentNode: CanvasNode, canvasData: CanvasDat
   return edge ? canvasData.nodes.find(node => node.id === edge.toNode) || null : null;
 }
 
-export function convertQuest(canvasData: CanvasData): QuestSchema {
-  const questNode = findQuestNode(canvasData);
-  if (!questNode) {
-    throw new Error('Quest node not found in canvas data');
-  }
-  return convertQuestNode(questNode, canvasData);
-}
-
 /**
- * 从Journey画布数据中查找所有quest画布文件的路径
- * @param journeyCanvas Journey画布数据
- * @returns quest画布文件路径数组
+ * Find all quest canvas file paths in the journey.
+ * Quest canvas files are named with the format `*.quest.canvas`.
+ * @param journeyCanvas Journey canvas data
+ * @returns quest canvas file paths
  */
-export function findQuestCanvasesInJourney(journeyCanvas: CanvasData): string[] {
+export function findQuestCanvases(journeyCanvas: CanvasData): string[] {
   return journeyCanvas.nodes
     .filter(node => 
       node.type === 'file' && 
@@ -269,3 +269,52 @@ export function findQuestCanvasesInJourney(journeyCanvas: CanvasData): string[] 
     .map(node => node.file as string);
 }
 
+export function convertQuestNode(questNode: CanvasNode, canvasData: CanvasData): QuestSchema {
+  if (!questNode.text) {
+    throw new Error('Quest text is required');
+  }
+
+  const lines = questNode.text.split('\n');
+  const firstLine = lines[0];
+  const {tag, name, id} = getMetadata(firstLine);
+  if (!id) {
+    throw new Error('Quest id is required: ' + firstLine);
+  }
+
+  if (tag !== 'quest') {
+    throw new Error('Invalid quest tag: ' + tag);
+  }
+
+  const quest: QuestSchema = {
+    name,
+    id,
+    desc: lines.slice(1).join('\n'),
+    blockCount: 0,
+    sections: [],
+    updatedAt: new Date(),
+    dependentQuests: [],
+    childQuests: []
+  };
+
+  let currentSectionNode = findNextSectionNode(questNode, canvasData);
+  while (currentSectionNode) {
+    const section = convertSectionNode(currentSectionNode, canvasData);
+    quest.sections.push(section);
+    currentSectionNode = findNextSectionNode(currentSectionNode, canvasData);
+  }
+
+  return quest;
+}
+
+/**
+ * Convert a quest canvas to a quest schema.
+ * @param canvasData Quest canvas data
+ * @returns Quest schema, with empty dependentQuests and childQuests
+ */
+export function convertQuestCanvas(canvasData: CanvasData): QuestSchema {
+  const questNode = findQuestNode(canvasData);
+  if (!questNode) {
+    throw new Error('Quest node not found in canvas data');
+  }
+  return convertQuestNode(questNode, canvasData);
+}

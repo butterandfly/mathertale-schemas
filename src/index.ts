@@ -1,19 +1,16 @@
 export { 
-    convertQuest,
     convertQuestNode,
     convertSectionNode,
     convertBlockNode,
-    findQuestCanvasesInJourney,
-    convertJourney,
+    findQuestCanvases,
+    convertJourneyCanvas,
+    convertQuestCanvas
 } from './extract-content';
 
-export {
-    BlockType, FactType, QuestionType
-} from './schemas';
 
 export type { 
     BlockSchema, SectionSchema, QuestSchema, 
-    JourneySchema, QuestSummarySchema 
+    JourneySchema, QuestShortSchema 
 } from './schemas';
 
 // 从 node-validator 导出

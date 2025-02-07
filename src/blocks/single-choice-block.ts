@@ -1,5 +1,6 @@
 import { RawData } from "../node-validator";
 import { BlockSchema } from "../schemas";
+import { convertRawContent } from "../convert-helper";
 
 export const SingleChoiceType = 'SINGLE_CHOICE' as const;
 
@@ -22,7 +23,7 @@ export interface SingleChoiceData extends BlockSchema {
 }
 
 export function convertSingleChoiceBlockNode(rawData: RawData): SingleChoiceData {
-  const {blockContent, questionData} = convertSingleChoice(rawData.rawContent);
+  const { blockContent, questionData } = convertSingleChoice(rawData.rawContent);
   return {
     id: rawData.id,
     type: SingleChoiceType,
@@ -59,61 +60,34 @@ export function convertSingleChoiceBlockNode(rawData: RawData): SingleChoiceData
  * 4. 选项格式必须为 "字母: 选项内容"
  */
 export function convertSingleChoice(rawContent: string): {
-    blockContent: string, 
-    questionData: SingleChoiceQuestionData} {
-
-  let blockContent: string;
-  const questionData: SingleChoiceQuestionData = {
-    choices: [],
-    answer: '',
-    explanation: ''
-  };
-
-  // 定义所有可能的关键字
+  blockContent: string, 
+  questionData: SingleChoiceQuestionData
+} {
+  // 定义所有可能的关键字（注意尾部的冒号）
   const keywords = ['choice:', 'answer:', 'explanation:'];
   
-  // 将文本分割成行
-  const lines = rawContent.split('\n');
+  // Use the helper function to extract sections from the raw content.
+  // The returned object contains "content" (题目内容) and sections under keys:
+  // "choice", "answer", "explanation" (without the trailing colon)
+  const { content: blockContent, choice, answer, explanation } = convertRawContent(rawContent, keywords);
   
-  // 找到所有关键字的行号
-  const keywordPositions: { keyword: string; lineIndex: number }[] = [];
-  lines.forEach((line, index) => {
-    const keyword = keywords.find(k => line.trim() === k);
-    if (keyword) {
-      keywordPositions.push({ keyword, lineIndex: index });
-    }
-  });
+  // Process the "choice" section: each line should be in the format "key: value"
+  const choices: Choice[] = [];
+  if (choice) {
+    choice.split('\n').forEach(line => {
+      const [key, value] = line.split(':').map(s => s.trim());
+      if (key && value) {
+        choices.push({ key, content: value });
+      }
+    });
+  }
   
-  // 按行号排序
-  keywordPositions.sort((a, b) => a.lineIndex - b.lineIndex);
+  // Assemble the question data
+  const questionData: SingleChoiceQuestionData = {
+    choices,
+    answer: answer ? answer.trim() : '',
+    explanation: explanation ? explanation.trim() : ''
+  };
   
-  // 处理题目内容（从开始到第一个关键字）
-  const firstKeywordLine = keywordPositions[0]?.lineIndex ?? lines.length;
-  blockContent = lines.slice(0, firstKeywordLine).join('\n').trim();
-  
-  // 处理每个关键字部分
-  keywordPositions.forEach((pos, index) => {
-    const startLine = pos.lineIndex + 1;
-    const endLine = keywordPositions[index + 1]?.lineIndex ?? lines.length;
-    const content = lines.slice(startLine, endLine).join('\n').trim();
-    
-    switch (pos.keyword) {
-      case 'choice:':
-        content.split('\n').forEach(line => {
-          const [key, value] = line.split(':').map(s => s.trim());
-          if (key && value) {
-            questionData.choices.push({key, content: value});
-          }
-        });
-        break;
-      case 'answer:':
-        questionData.answer = content;
-        break;
-      case 'explanation:':
-        questionData.explanation = content;
-        break;
-    }
-  });
-
-  return {blockContent, questionData};
+  return { blockContent, questionData };
 }
