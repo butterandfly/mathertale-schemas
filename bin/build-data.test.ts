@@ -36,15 +36,15 @@ describe('findAllJourneyFiles', () => {
 
 describe('buildDatabase', () => {
     beforeEach(() => {
-        if (existsSync('./test/data')) {
-            rmSync('./test/data', { recursive: true })
+        if (existsSync('./test/output')) {
+            rmSync('./test/output', { recursive: true })
         }
     })
 
     it('should build the database correctly', () => {
-        buildDatabase('./test', './test/data')
+        buildDatabase('./test', './test/output')
 
-        const data = readFileSync('./test/data/journeys.json', 'utf8')
+        const data = readFileSync('./test/output/journeys.json', 'utf8')
         const journeys = JSON.parse(data)
         expect(journeys.length).toEqual(1)
         expect(journeys[0].name).toEqual('Journey 1')

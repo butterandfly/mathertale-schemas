@@ -3,8 +3,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import path from 'path';
-import fs from 'fs';
+import { buildJourneyDataFiles, buildDatabase } from './build-data';
 
 const program = new Command();
 
@@ -28,18 +27,34 @@ program
       }
 
       // 确定输出目录
-      const outputDir = options.output || process.cwd();
+      const outputDir = options.output || 'output';
       
-      // 确保输出目录存在
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-
-      // TODO: 在这里处理 journey canvas 文件
-      console.log('Processing journey canvas file:', file);
-      console.log('Output directory:', outputDir);
+      // 构建journey数据文件
+      buildJourneyDataFiles(file, outputDir);
 
       spinner.succeed(chalk.green('Journey built successfully!'));
+    } catch (error: any) {
+      spinner.fail(chalk.red(`Build failed: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('db')
+  .description('Build all journey data files')
+  .argument('<dir>', 'Root directory containing journey files')
+  .option('-o, --output <dir>', 'Output directory')
+  .action(async (dir, options) => {
+    const spinner = ora('Building database...').start();
+
+    try {
+      // 确定输出目录
+      const outputDir = options.output || 'data';
+      
+      // 构建所有journey数据文件
+      buildDatabase(dir, outputDir);
+
+      spinner.succeed(chalk.green('Database built successfully!'));
     } catch (error: any) {
       spinner.fail(chalk.red(`Build failed: ${error.message}`));
       process.exit(1);

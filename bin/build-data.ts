@@ -6,6 +6,11 @@ import { isJourneyCanvasAvailable } from "../src/extract-content"
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { JourneyShortSchema } from '../src/schemas';
 
+/**
+ * Build journey data from a journey canvas file.
+ * @param journeyPath - The path to the journey canvas file.
+ * @returns An object containing the journey and its quests.
+ */
 export function buildJourneyData(journeyPath: string): {
     journey:JourneySchema,
     quests:QuestSchema[]
@@ -38,6 +43,38 @@ export function buildJourneyData(journeyPath: string): {
     }
 }
 
+export function buildJourneyDataFiles(journeyPath: string, outputDir: string = 'output'): void {
+    // 确保输出目录存在
+    if (!existsSync(outputDir)) {
+        mkdirSync(outputDir);
+    }
+
+    // 构建journey数据
+    const { journey, quests } = buildJourneyData(journeyPath);
+    
+    // 保存journey文件
+    const journeyFileName = `journey-${journey.id}.json`;
+    writeFileSync(
+        path.join(outputDir, journeyFileName),
+        JSON.stringify(journey, null, 2)
+    );
+    
+    // 创建并保存quest文件
+    const questDirName = `journey-${journey.id}`;
+    const questDirPath = path.join(outputDir, questDirName);
+    if (!existsSync(questDirPath)) {
+        mkdirSync(questDirPath);
+    }
+    
+    quests.forEach(quest => {
+        const questFileName = `quest-${quest.id}.json`;
+        writeFileSync(
+            path.join(questDirPath, questFileName),
+            JSON.stringify(quest, null, 2)
+        );
+    });
+}
+
 export function findAllAvailableJourneyFiles(rootDir: string): string[] {
     const journeyFiles = readdirSync(rootDir, { withFileTypes: true })
         .filter(dirent => dirent.isFile() && dirent.name.endsWith('.journey.canvas'))
@@ -62,30 +99,12 @@ export function buildDatabase(rootDir: string, outputDir: string = 'data'): void
     
     // 处理每个journey文件
     journeyFiles.forEach(journeyFile => {
-        const { journey, quests } = buildJourneyData(journeyFile);
+        // 复用 buildJourneyDataFiles 来生成单个 journey 的文件
+        buildJourneyDataFiles(journeyFile, outputDir);
+        
+        // 收集journey信息用于生成journeys.json
+        const { journey } = buildJourneyData(journeyFile);
         allJourneys.push(journey);
-        
-        // 保存journey文件
-        const journeyFileName = `journey-${journey.id}.json`;
-        writeFileSync(
-            path.join(outputDir, journeyFileName),
-            JSON.stringify(journey, null, 2)
-        );
-        
-        // 创建并保存quest文件
-        const questDirName = `journey-${journey.id}`;
-        const questDirPath = path.join(outputDir, questDirName);
-        if (!existsSync(questDirPath)) {
-            mkdirSync(questDirPath);
-        }
-        
-        quests.forEach(quest => {
-            const questFileName = `quest-${quest.id}.json`;
-            writeFileSync(
-                path.join(questDirPath, questFileName),
-                JSON.stringify(quest, null, 2)
-            );
-        });
     });
     
     // 生成并保存journeys.json
