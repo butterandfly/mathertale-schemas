@@ -1,4 +1,4 @@
-import { RawData } from '../node-validator';
+import { RawData } from '../convert-helper';
 import { BlockSchema } from '../schemas';
 
 export const DefinitionType = 'DEFINITION' as const;

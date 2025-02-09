@@ -1,4 +1,7 @@
-import { BlockSchema } from './schemas';
+import { getMetadata } from "./convert-helper";
+import { CanvasNode } from "./convert-helper";
+import { isValidUUID } from "./convert-helper";
+
 
 export const MARKED_NODE_TAGS = {
   structural: [
@@ -15,39 +18,7 @@ export const MARKED_NODE_TAGS = {
   ]
 } as const;
 
-export interface CanvasNode {
-  id: string;
-  type: string;
-  text?: string;
-  file?: string;
-}
 
-export interface CanvasEdge {
-  fromNode: string;
-  toNode: string;
-  fromSide: string;
-  toSide: string;
-}
-
-export interface CanvasData {
-  nodes: CanvasNode[];
-  edges: CanvasEdge[];
-}
-
-export interface RawData {
-  id: string;
-  tag: string;
-  name?: string;
-  rawContent: string;
-}
-
-export interface Metadata {
-  tag: string;
-  name: string;
-  id: string;
-}
-
-export type BlockNodeConverter = (rawData: RawData) => BlockSchema;
 
 export type MarkedNodeType = 'structural' | 'block';
 export type NodeType = MarkedNodeType | 'plain';
@@ -65,25 +36,7 @@ export interface NodeValidationResult {
   };
 }
 
-export function isValidUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
-}
 
-export function getMetadata(line: string): Metadata {
-  const parts = line.trim().split(' ');
-  const tag = parts[0].replace('#', '');
-
-  let id = '';
-  const lastPart = parts[parts.length - 1];
-  if (lastPart.startsWith('^') && isValidUUID(lastPart.replace('^', ''))) {
-    id = lastPart.replace('^', '');
-    parts.pop();
-  }
-
-  const name = parts.slice(1).join(' ');
-  return { tag, name, id };
-}
 
 export function isValidNode(node: CanvasNode): NodeValidationResult {
   if (!node.text || !node.text.trim().startsWith('#')) {

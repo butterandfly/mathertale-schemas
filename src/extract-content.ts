@@ -8,7 +8,7 @@ import {
   getMetadata,
   RawData,
   BlockNodeConverter
-} from './node-validator';
+} from './convert-helper';
 
 import {
   BlockSchema,
@@ -125,7 +125,7 @@ export function findQuestNode(canvasData: CanvasData): CanvasNode | undefined {
 /**
  * Convert a journey canvas to a journey schema.
  * @param journeyCanvasData Journey canvas data
- * @param questMap Quest map
+ * @param questMap {questPath: QuestSchema}
  * @returns Journey schema
  */
 export function convertJourneyCanvas(
@@ -137,53 +137,17 @@ export function convertJourneyCanvas(
     throw new Error('Journey node not found in canvas data');
   }
 
-  if (!journeyNode.text) {
-    throw new Error('Journey text is required');
-  }
+  const journey = extractDataFromJourneyNode(journeyNode);
 
-  const lines = journeyNode.text.split('\n');
-  const firstLine = lines[0];
-  const {tag, name, id} = getMetadata(firstLine);
-  
-  if (!id) {
-    throw new Error('Journey id is required: ' + journeyNode.text);
-  }
-  if (!name) {
-    throw new Error('Journey name is required: ' + journeyNode.text);
-  }
-
-  const rawContent = lines.slice(1).join('\n').trim();
-  const {content: desc, category, devStatus} = convertRawContent(rawContent, ['category:', 'devStatus:']);
-
-  const categoryMap: Record<string, Category> = {
-    'foundational': Category.FOUNDATIONAL,
-    'analysis': Category.ANALYSIS,
-    'algebra': Category.ALGEBRA,
-    'probability': Category.PROBABILITY
-  }
-
-  if (!categoryMap[category]) {
-    throw new Error('Invalid category: ' + category);
-  }
-  
-  const devStatusMap: Record<string, DevStatus> = {
-    'in_development': 'in_development',
-    'coming_soon': 'coming_soon',
-    'available': 'available'
-  }
-
-  if (!devStatusMap[devStatus]) {
-    throw new Error('Invalid dev status: ' + devStatus);
-  }
-
-  const questShortMap: Record<string, QuestShortSchema> = {};
+  // {questId: QuestShortSchema}
+  const questShortMap: Record<string, QuestShortSchema> = journey.questShortMap;
 
   // 遍历所有文件类型的节点，通过 file 属性查找对应的 quest
   journeyCanvasData.nodes.forEach(node => {
     if (node.type === 'file' && node.file) {
       const quest = questMap[node.file];
       if (quest) {
-        questShortMap[node.id] = {
+        questShortMap[quest.id] = {
           id: quest.id,
           name: quest.name,
           desc: quest.desc,
@@ -207,8 +171,8 @@ export function convertJourneyCanvas(
       }
 
       if (fromNode?.type === 'file' && toNode?.type === 'file') {
-        const fromQuestShort = questShortMap[fromNode.id];
-        const toQuestShort = questShortMap[toNode.id];
+        const fromQuestShort = questShortMap[questMap[fromNode.file!].id];
+        const toQuestShort = questShortMap[questMap[toNode.file!].id];
 
         if (fromQuestShort && toQuestShort) {
           fromQuestShort.childQuests.push(toQuestShort.id);
@@ -218,17 +182,11 @@ export function convertJourneyCanvas(
     }
   });
 
-  return {
-    id,
-    name,
-    desc,
-    questShortMap,
-    category: categoryMap[category],
-    questCount: journeyCanvasData.nodes.filter(node => node.type === 'quest').length,
-    devStatus: devStatusMap[devStatus],
-    updatedAt: new Date(),
-    createdAt: new Date()
-  };
+  console.log(journey.questShortMap)
+
+  journey.questCount = Object.keys(questShortMap).length;
+
+  return journey;
 }
 
 // Find the next section node.
@@ -303,6 +261,11 @@ export function convertQuestNode(questNode: CanvasNode, canvasData: CanvasData):
     currentSectionNode = findNextSectionNode(currentSectionNode, canvasData);
   }
 
+  // 计算 blockCount
+  quest.blockCount = quest.sections.reduce((count, section) => {
+    return count + section.blocks.length;
+  }, 0);
+
   return quest;
 }
 
@@ -317,4 +280,62 @@ export function convertQuestCanvas(canvasData: CanvasData): QuestSchema {
     throw new Error('Quest node not found in canvas data');
   }
   return convertQuestNode(questNode, canvasData);
+}
+
+/**
+ * Extract data from a journey node.
+ * @param journeyNode Journey node
+ * @returns Journey schema, with empty questShortMap and 0 questCount
+ */
+export function extractDataFromJourneyNode(journeyNode: CanvasNode): JourneySchema {
+  if (!journeyNode.text) {
+    throw new Error('Journey text is required');
+  }
+
+  const lines = journeyNode.text.split('\n');
+  const firstLine = lines[0];
+  const {tag, name, id} = getMetadata(firstLine);
+  
+  if (!id) {
+    throw new Error('Journey id is required: ' + journeyNode.text);
+  }
+  if (!name) {
+    throw new Error('Journey name is required: ' + journeyNode.text);
+  }
+
+  const rawContent = lines.slice(1).join('\n').trim();
+  const {content: desc, category, devStatus} = convertRawContent(rawContent, ['category:', 'devStatus:']);
+
+  const categoryMap: Record<string, Category> = {
+    'foundational': Category.FOUNDATIONAL,
+    'analysis': Category.ANALYSIS,
+    'algebra': Category.ALGEBRA,
+    'probability': Category.PROBABILITY
+  }
+
+  if (!categoryMap[category]) {
+    throw new Error('Invalid category: ' + category);
+  }
+  
+  const devStatusMap: Record<string, DevStatus> = {
+    'in_development': 'in_development',
+    'coming_soon': 'coming_soon',
+    'available': 'available'
+  }
+
+  if (!devStatusMap[devStatus]) {
+    throw new Error('Invalid dev status: ' + devStatus);
+  }
+
+  return {
+    id,
+    name,
+    desc,
+    category: categoryMap[category],
+    devStatus: devStatusMap[devStatus],
+    questCount: 0,
+    updatedAt: new Date(),
+    createdAt: new Date(),
+    questShortMap: {}
+  }
 }

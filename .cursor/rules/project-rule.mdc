@@ -1,0 +1,10 @@
+---
+description: Project details.
+globs: 
+---
+
+# Rules
+
+- This project uses `pnpm`.
+- This project uses `vitest`.
+- Unit tests are generated in the folder of the tested code.

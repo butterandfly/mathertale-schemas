@@ -1,4 +1,4 @@
-import { RawData } from "../node-validator";
+import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
 

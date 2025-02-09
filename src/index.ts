@@ -16,15 +16,9 @@ export type {
 // 从 node-validator 导出
 export {
     isValidNode,
-    getMetadata,
-    isValidUUID
 } from './node-validator';
 
 export type {
-    CanvasNode,
-    CanvasEdge,
-    CanvasData,
-    Metadata,
     NodeValidationResult,
     MarkedNodeType,
     NodeType,
