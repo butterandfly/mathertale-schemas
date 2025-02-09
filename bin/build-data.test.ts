@@ -1,17 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { buildJourneyData } from './build-data'
-import { readFileSync } from 'fs'
-import * as path from 'path'
-
-// Mock fs.readFileSync
-// vi.mock('fs', () => ({
-//     readFileSync: vi.fn()
-// }))
-
-const journeyPath = './test/Journey 1.canvas'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { buildDatabase, buildJourneyData, findAllAvailableJourneyFiles } from './build-data'
+import { existsSync, readFileSync, rmSync } from 'fs'
 
 describe('buildJourneyData', () => {
     it('should build journey data correctly', () => {
+        const journeyPath = './test/Journey 1.journey.canvas'
         const {journey, quests} = buildJourneyData(journeyPath)
         const questShortMap = journey.questShortMap
 
@@ -33,71 +26,27 @@ describe('buildJourneyData', () => {
     })
 })
 
-// describe('buildJourneyData', () => {
-//     beforeEach(() => {
-//         vi.clearAllMocks()
-//     })
+describe('findAllJourneyFiles', () => {
+    it('should find all journey files in the given directory', () => {
+        const journeyFiles = findAllAvailableJourneyFiles('./test')
+        expect(journeyFiles.length).toEqual(1)
+        expect(journeyFiles[0]).toEqual('test/Journey 1.journey.canvas')
+    })
+})
 
-//     it('should build journey data correctly', () => {
-//         // Mock journey canvas data
-//         const mockJourneyCanvas = {
-//             nodes: [
-//                 {"id":"journey-node-1","type":"text","text":"#journey Proofcraft 101 ^8a51c4c7-6efd-463e-9c4d-e5f127aa236e\n\nThe very first class on serious mathematics.\n\ncategory:\nfoundational\n\ndevStatus:\navailable","x":-220,"y":-400,"width":399,"height":294},
-//                 { id: 'quest-node-1', path: 'path/to/quest1.quest.canvas' },
-//                 { id: 'quest-node-2', path: 'path/to/quest2.quest.canvas' }
-//             ],
-//             edges: [
-//                 {
-//                     id: 'edge-1',
-//                     fromNode: 'journey-node-1',
-//                     fromSide: 'bottom',
-//                     toNode: 'quest-node-1',
-//                     toSide: 'top'
-//                 },
-//                 {
-//                     id: 'edge-2',
-//                     fromNode: 'journey-node-1',
-//                     fromSide: 'bottom',
-//                     toNode: 'quest-node-2',
-//                     toSide: 'top'
-//                 }
-//             ]
-//         }
+describe('buildDatabase', () => {
+    beforeEach(() => {
+        if (existsSync('./test/data')) {
+            rmSync('./test/data', { recursive: true })
+        }
+    })
 
-//         // Mock quest canvas data
-//         const mockQuestCanvas1 = {
-//             id: 'quest1',
-//             title: 'Quest 1'
-//         }
+    it('should build the database correctly', () => {
+        buildDatabase('./test', './test/data')
 
-//         const mockQuestCanvas2 = {
-//             id: 'quest2',
-//             title: 'Quest 2'
-//         }
-
-//         // Setup readFileSync mock implementations
-//         const readFileSyncMock = readFileSync as any
-//         readFileSyncMock
-//             .mockImplementationOnce(() => JSON.stringify(mockJourneyCanvas))
-//             .mockImplementationOnce(() => JSON.stringify(mockQuestCanvas1))
-//             .mockImplementationOnce(() => JSON.stringify(mockQuestCanvas2))
-
-//         // Execute
-//         const result = buildJourneyData('fake/path/journey.canvas')
-
-//         // Verify
-//         expect(readFileSyncMock).toHaveBeenCalledTimes(3)
-//         // expect(result).toHaveProperty('journey')
-//         // expect(result).toHaveProperty('quests')
-//         // expect(result.quests).toHaveLength(2)
-//     })
-
-//     it('should throw error when journey file is invalid', () => {
-//         const readFileSyncMock = readFileSync as any
-//         readFileSyncMock.mockImplementation(() => 'invalid json')
-
-//         expect(() => {
-//             buildJourneyData('fake/path/journey.canvas')
-//         }).toThrow()
-//     })
-// }) 
+        const data = readFileSync('./test/data/journeys.json', 'utf8')
+        const journeys = JSON.parse(data)
+        expect(journeys.length).toEqual(1)
+        expect(journeys[0].name).toEqual('Journey 1')
+    })
+})

@@ -69,3 +69,5 @@ export interface SingleChoiceQuestionDataSchema {
     answer: string;
     explanation: string;
 } 
+
+export type JourneyShortSchema = Omit<JourneySchema, 'questShortMap'>;

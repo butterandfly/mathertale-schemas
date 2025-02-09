@@ -182,8 +182,6 @@ export function convertJourneyCanvas(
     }
   });
 
-  console.log(journey.questShortMap)
-
   journey.questCount = Object.keys(questShortMap).length;
 
   return journey;
@@ -338,4 +336,19 @@ export function extractDataFromJourneyNode(journeyNode: CanvasNode): JourneySche
     createdAt: new Date(),
     questShortMap: {}
   }
+}
+
+/**
+ * Check if a journey canvas is available.
+ * @param journeyCanvas Journey canvas data
+ * @returns true if the journey is available, false otherwise
+ */
+export function isJourneyCanvasAvailable(journeyCanvas: CanvasData): boolean {
+  const journeyNode = findJourneyNode(journeyCanvas);
+  if (!journeyNode) {
+    throw new Error('Journey node not found in canvas data');
+  }
+
+  const journey = extractDataFromJourneyNode(journeyNode);
+  return journey.devStatus === 'available';
 }
