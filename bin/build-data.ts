@@ -75,12 +75,32 @@ export function buildJourneyDataFiles(journeyPath: string, outputDir: string = '
     });
 }
 
-export function findAllAvailableJourneyFiles(rootDir: string): string[] {
-    const journeyFiles = readdirSync(rootDir, { withFileTypes: true })
-        .filter(dirent => dirent.isFile() && dirent.name.endsWith('.journey.canvas'))
-        .map(dirent => path.join(rootDir, dirent.name))
-
-    return journeyFiles.filter(journeyFile => isJourneyCanvasAvailable(JSON.parse(readFileSync(journeyFile, 'utf8'))))
+export function findAllAvailableJourneyFilesRecursive(dir: string): string[] {
+    let journeyFiles: string[] = [];
+    
+    // 读取当前目录下的所有文件和文件夹
+    const items = readdirSync(dir, { withFileTypes: true });
+    
+    for (const item of items) {
+        const fullPath = path.join(dir, item.name);
+        
+        if (item.isDirectory()) {
+            // 递归处理子目录
+            journeyFiles = journeyFiles.concat(findAllAvailableJourneyFilesRecursive(fullPath));
+        } else if (item.isFile() && item.name.endsWith('.journey.canvas')) {
+            // 检查文件是否可用
+            try {
+                const content = JSON.parse(readFileSync(fullPath, 'utf8'));
+                if (isJourneyCanvasAvailable(content)) {
+                    journeyFiles.push(fullPath);
+                }
+            } catch (error) {
+                console.warn(`Warning: Failed to process ${fullPath}`, error);
+            }
+        }
+    }
+    
+    return journeyFiles;
 }
 
 function buildJourneyShortsFromJourneys(journeys: JourneySchema[]): JourneyShortSchema[] {
@@ -93,8 +113,8 @@ export function buildDatabase(rootDir: string, outputDir: string = 'data'): void
         mkdirSync(outputDir);
     }
 
-    // 找到所有可用的journey文件
-    const journeyFiles = findAllAvailableJourneyFiles(rootDir);
+    // 使用递归函数找到所有可用的journey文件
+    const journeyFiles = findAllAvailableJourneyFilesRecursive(rootDir);
     const allJourneys: JourneySchema[] = [];
     
     // 处理每个journey文件

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { buildDatabase, buildJourneyData, findAllAvailableJourneyFiles } from './build-data'
+import { buildDatabase, buildJourneyData, findAllAvailableJourneyFilesRecursive } from './build-data'
 import { existsSync, readFileSync, rmSync } from 'fs'
 
 describe('buildJourneyData', () => {
@@ -28,7 +28,7 @@ describe('buildJourneyData', () => {
 
 describe('findAllJourneyFiles', () => {
     it('should find all journey files in the given directory', () => {
-        const journeyFiles = findAllAvailableJourneyFiles('./test')
+        const journeyFiles = findAllAvailableJourneyFilesRecursive('./test')
         expect(journeyFiles.length).toEqual(1)
         expect(journeyFiles[0]).toEqual('test/Journey 1.journey.canvas')
     })

@@ -64,10 +64,4 @@ export interface JourneySchema {
   questShortMap: Record<string, QuestShortSchema>;
 }
 
-export interface SingleChoiceQuestionDataSchema {
-    choices: { [key: string]: string };
-    answer: string;
-    explanation: string;
-} 
-
 export type JourneyShortSchema = Omit<JourneySchema, 'questShortMap'>;

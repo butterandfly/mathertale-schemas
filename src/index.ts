@@ -4,14 +4,20 @@ export {
     convertBlockNode,
     findQuestCanvases,
     convertJourneyCanvas,
-    convertQuestCanvas
+    convertQuestCanvas,
 } from './extract-content';
-
 
 export type { 
     BlockSchema, SectionSchema, QuestSchema, 
-    JourneySchema, QuestShortSchema 
+    JourneySchema, QuestShortSchema, Category, DevStatus 
 } from './schemas';
+
+export { isValidUUID, Metadata, RawData, BlockNodeConverter } from './convert-helper';
+
+// Blocks 
+export {ParaType, ParaData} from './blocks/para-block';
+export {SingleChoiceType, SingleChoiceData} from './blocks/single-choice-block';
+export { NotedData, DefinitionType, FactType, TheoremType, PropositionType, RemarkType } from './blocks/noted-block';
 
 // 从 node-validator 导出
 export {
