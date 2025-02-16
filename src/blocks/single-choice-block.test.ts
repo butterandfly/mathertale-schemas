@@ -11,7 +11,7 @@ describe('SingleChoiceBlock', () => {
           rawContent: `
     What is 2+2?
     
-    choice:
+    choices:
     a: 3
     b: 4
     c: 5
@@ -41,5 +41,68 @@ describe('SingleChoiceBlock', () => {
           answer: 'b',
           explanation: 'Because 2+2=4'
         });
-      });
-    })
+    });
+    
+    it('should throw error if choices key is misspelled as "choice"', () => {
+        const rawData: RawData = {
+          id: 'fake-id-error-1',
+          tag: 'single_choice',
+          rawContent: `
+    What is 2+2?
+    
+    choice:
+    a: 3
+    b: 4
+    c: 5
+    
+    answer:
+    b
+    
+    explanation:
+    Because 2+2=4`
+        };
+
+        expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
+    });
+    
+    it('should throw error if answer field is missing', () => {
+        const rawData: RawData = {
+          id: 'fake-id-error-2',
+          tag: 'single_choice',
+          rawContent: `
+    What is 2+2?
+    
+    choices:
+    a: 3
+    b: 4
+    c: 5
+    
+    explanation:
+    Because 2+2=4`
+        };
+
+        expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
+    });
+    
+    it('should throw error if explanation key is misspelled as "explain"', () => {
+        const rawData: RawData = {
+          id: 'fake-id-error-3',
+          tag: 'single_choice',
+          rawContent: `
+    What is 2+2?
+    
+    choices:
+    a: 3
+    b: 4
+    c: 5
+    
+    answer:
+    b
+    
+    explain:
+    Because 2+2=4`
+        };
+
+        expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
+    });
+});

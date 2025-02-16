@@ -40,7 +40,7 @@ export function convertSingleChoiceBlockNode(rawData: RawData): SingleChoiceData
  * This is the question content.
  * It can have multiple lines and LaTeX content like $x^2$.
  * 
- * choice:
+ * choices:
  * a: First choice with $\alpha$
  * b: Second choice with $\beta$
  * c: Third choice with $\gamma$
@@ -63,23 +63,39 @@ export function convertSingleChoice(rawContent: string): {
   blockContent: string, 
   questionData: SingleChoiceQuestionData
 } {
+
   // 定义所有可能的关键字（注意尾部的冒号）
-  const keywords = ['choice:', 'answer:', 'explanation:'];
+  const keywords = ['choices:', 'answer:', 'explanation:'];
   
   // Use the helper function to extract sections from the raw content.
   // The returned object contains "content" (题目内容) and sections under keys:
   // "choice", "answer", "explanation" (without the trailing colon)
-  const { content: blockContent, choice, answer, explanation } = convertRawContent(rawContent, keywords);
+  const { content: blockContent, choices: choicesRaw, answer, explanation } = convertRawContent(rawContent, keywords);
   
   // Process the "choice" section: each line should be in the format "key: value"
   const choices: Choice[] = [];
-  if (choice) {
-    choice.split('\n').forEach(line => {
-      const [key, value] = line.split(':').map(s => s.trim());
-      if (key && value) {
-        choices.push({ key, content: value });
-      }
-    });
+
+  if (!choicesRaw) {
+    throw new Error('choices section is required: ' + rawContent);
+  }
+
+  if (!answer) {
+    throw new Error('answer section is required: ' + rawContent);
+  }
+
+  if (!explanation) {
+    throw new Error('explanation section is required: ' + rawContent);
+  }
+
+  choicesRaw.split('\n').forEach(line => {
+    const [key, value] = line.split(':').map(s => s.trim());
+    if (key && value) {
+      choices.push({ key, content: value });
+    }
+  });
+
+  if (choices.length === 0) {
+    throw new Error('choices section is empty: ' + rawContent);
   }
   
   // Assemble the question data
