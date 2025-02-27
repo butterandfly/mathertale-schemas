@@ -302,7 +302,14 @@ export function extractDataFromJourneyNode(journeyNode: CanvasNode): JourneySche
   }
 
   const rawContent = lines.slice(1).join('\n').trim();
-  const {content: desc, category, devStatus} = convertRawContent(rawContent, ['category:', 'devStatus:']);
+  const keywords = [
+    { pattern: 'category:', name: 'category' },
+    { pattern: 'devStatus:', name: 'devStatus' }
+  ]
+  const converted = convertRawContent(rawContent, keywords);
+  const desc = converted.content as string;
+  const category = converted.category as string;
+  const devStatus = converted.devStatus as string;
 
   const categoryMap: Record<string, Category> = {
     'foundational': Category.FOUNDATIONAL,

@@ -16,7 +16,11 @@ in-progress
 difficulty:
 medium`
 
-    const keywords = ['category:', 'devStatus:', 'difficulty:']
+    const keywords = [
+      { pattern: 'category:', name: 'category' },
+      { pattern: 'devStatus:', name: 'devStatus' },
+      { pattern: 'difficulty:', name: 'difficulty' }
+    ]
     
     const result = convertRawContent(rawContent, keywords)
     
@@ -30,7 +34,10 @@ medium`
 
   it('should handle content with no keywords', () => {
     const rawContent = 'Just some content\nwithout any keywords'
-    const keywords = ['category:', 'devStatus:']
+    const keywords = [
+      { pattern: 'category:', name: 'category' },
+      { pattern: 'devStatus:', name: 'devStatus' }
+    ]
     
     const result = convertRawContent(rawContent, keywords)
     
@@ -41,7 +48,10 @@ medium`
 
   it('should handle empty content', () => {
     const rawContent = ''
-    const keywords = ['category:', 'devStatus:']
+    const keywords = [
+      { pattern: 'category:', name: 'category' },
+      { pattern: 'devStatus:', name: 'devStatus' }
+    ]
     
     const result = convertRawContent(rawContent, keywords)
     
@@ -52,10 +62,41 @@ medium`
 
   it('should handle real data well', () => {
     const rawContent = "#journey Proofcraft 101 ^8a51c4c7-6efd-463e-9c4d-e5f127aa236e\n\nThe very first class on serious mathematics.\n\ncategory:\nfoundational\n\ndevStatus:\navailable"
-    const keywords = ['category:', 'devStatus:']
+    const keywords = [
+      { pattern: 'category:', name: 'category' },
+      { pattern: 'devStatus:', name: 'devStatus' }
+    ]
     const result = convertRawContent(rawContent, keywords)
 
     expect(result['category']).toEqual('foundational')
+  })
+
+  it('should handle regex patterns and group multiple matches', () => {
+    const rawContent = `Some initial content
+
+part-1:
+Content for part 1
+
+part-2:
+Content for part 2
+
+part-3:
+Content for part 3`
+
+    const keywords = [
+      { pattern: /part-\d+:/, name: 'parts' }
+    ]
+
+    const result = convertRawContent(rawContent, keywords)
+
+    expect(result).toEqual({
+      content: 'Some initial content',
+      parts: [
+        'Content for part 1',
+        'Content for part 2',
+        'Content for part 3'
+      ]
+    })
   })
 }) 
 

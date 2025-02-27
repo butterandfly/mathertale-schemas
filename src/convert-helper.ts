@@ -54,20 +54,35 @@ export function getMetadata(line: string): Metadata {
   return { tag, name, id };
 }
 
+interface KeywordItem {
+  pattern: string | RegExp;
+  name: string;
+}
+
 export function convertRawContent(
     rawContent: string, 
-    keywords: string[]
-  ): { content: string, [key: string]: string } {
-    // Split the raw text into individual lines
+    keywords: KeywordItem[]
+  ): { content: string, [key: string]: string | string[] } {
     const lines = rawContent.split('\n');
   
     // Find the positions of all keywords in the text
-    const keywordPositions: { keyword: string; lineIndex: number }[] = [];
+    const keywordPositions: { name: string; lineIndex: number }[] = [];
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
-      const matchedKeyword = keywords.find(k => trimmedLine === k);
-      if (matchedKeyword) {
-        keywordPositions.push({ keyword: matchedKeyword, lineIndex: index });
+      for (const keyword of keywords) {
+        if (typeof keyword.pattern === 'string') {
+          if (trimmedLine === keyword.pattern) {
+            keywordPositions.push({ name: keyword.name, lineIndex: index });
+            break;
+          }
+        } else {
+          // 正则表达式匹配
+          const match = trimmedLine.match(keyword.pattern);
+          if (match) {
+            keywordPositions.push({ name: keyword.name, lineIndex: index });
+            break;
+          }
+        }
       }
     });
     
@@ -80,17 +95,30 @@ export function convertRawContent(
     const content = lines.slice(0, firstKeywordLine).join('\n').trim();
     
     // Prepare the result, starting with the main content
-    const result: { content: string, [key: string]: string } = { content };
+    const result: { content: string, [key: string]: string | string[] } = { content };
   
-    // Process each keyword by extracting its following text until the next keyword (or end of text)
-    keywordPositions.forEach((pos, index) => {
-      const startLine = pos.lineIndex + 1;
-      const endLine = keywordPositions[index + 1]?.lineIndex ?? lines.length;
-      const sectionContent = lines.slice(startLine, endLine).join('\n').trim();
-      // Remove trailing colon (:) from the keyword to use as the object key
-      const key = pos.keyword.replace(/:$/, '');
-      result[key] = sectionContent;
-    });
+    // 按name分组处理内容
+    const groupedPositions = keywordPositions.reduce((acc, pos) => {
+      if (!acc[pos.name]) {
+        acc[pos.name] = [];
+      }
+      acc[pos.name].push(pos);
+      return acc;
+    }, {} as { [key: string]: typeof keywordPositions });
+
+    // Process each group
+    for (const [name, positions] of Object.entries(groupedPositions)) {
+      const contents = positions.map((pos, index) => {
+        const startLine = pos.lineIndex + 1;
+        const endLine = positions[index + 1]?.lineIndex ?? 
+                       keywordPositions.find(kp => kp.lineIndex > pos.lineIndex)?.lineIndex ?? 
+                       lines.length;
+        return lines.slice(startLine, endLine).join('\n').trim();
+      });
+
+      // 如果只有一个内容，存为字符串；否则存为数组
+      result[name] = contents.length === 1 ? contents[0] : contents;
+    }
   
     return result;
   }

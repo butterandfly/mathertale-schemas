@@ -16,8 +16,9 @@ export { isValidUUID, Metadata, RawData, BlockNodeConverter } from './convert-he
 
 // Blocks 
 export {ParaType, ParaData} from './blocks/para-block';
-export {SingleChoiceType, SingleChoiceData} from './blocks/single-choice-block';
+export {SingleChoiceType, SingleChoiceData, Choice} from './blocks/single-choice-block';
 export { NotedData, DefinitionType, FactType, TheoremType, PropositionType, RemarkType } from './blocks/noted-block';
+export { ProofReorderType, ProofReorderData, OrderItem } from './blocks/proof-reorder-block';
 
 // 从 node-validator 导出
 export {

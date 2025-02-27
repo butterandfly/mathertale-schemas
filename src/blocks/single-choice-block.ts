@@ -63,14 +63,20 @@ export function convertSingleChoice(rawContent: string): {
   blockContent: string, 
   questionData: SingleChoiceQuestionData
 } {
-
-  // 定义所有可能的关键字（注意尾部的冒号）
-  const keywords = ['choices:', 'answer:', 'explanation:'];
+  // 定义关键字模式
+  const keywords = [
+    { pattern: 'choices:', name: 'choices' },
+    { pattern: 'answer:', name: 'answer' },
+    { pattern: 'explanation:', name: 'explanation' }
+  ];
   
-  // Use the helper function to extract sections from the raw content.
-  // The returned object contains "content" (题目内容) and sections under keys:
-  // "choice", "answer", "explanation" (without the trailing colon)
-  const { content: blockContent, choices: choicesRaw, answer, explanation } = convertRawContent(rawContent, keywords);
+  // Use the helper function to extract sections from the raw content
+  const converted = convertRawContent(rawContent, keywords);
+  const choicesRaw = converted.choices as string;
+  const answer = converted.answer as string;
+  const explanation = converted.explanation as string;
+  const blockContent = converted.content as string;
+
   
   // Process the "choice" section: each line should be in the format "key: value"
   const choices: Choice[] = [];
