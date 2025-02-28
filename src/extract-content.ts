@@ -1,5 +1,7 @@
 import { convertDefinitionBlockNode, convertFactBlockNode, convertPropositionBlockNode, convertRemarkBlockNode, convertTheoremBlockNode } from './blocks/noted-block';
 import { convertParaBlockNode } from './blocks/para-block';
+import { convertProofReorderBlockNode } from './blocks/proof-reorder-block';
+import { convertScratchWorkBlockNode } from './blocks/scratch-work-block';
 import { convertSingleChoiceBlockNode } from './blocks/single-choice-block';
 import { convertRawContent } from './convert-helper';
 import {
@@ -27,7 +29,9 @@ const tagBlockMap: Record<string, BlockNodeConverter> = {
   'theorem': convertTheoremBlockNode,
   'proposition': convertPropositionBlockNode,
   'remark': convertRemarkBlockNode,
-  'single_choice': convertSingleChoiceBlockNode
+  'single_choice': convertSingleChoiceBlockNode,
+  'scratch_work': convertScratchWorkBlockNode,
+  'proof_reorder': convertProofReorderBlockNode,
 }
 
 

@@ -25,3 +25,12 @@ mathertale-build db ./ --output ./data
 - `BlockSchema`
 
 More information can be found in [src/schemas.ts](./src/schemas.ts).
+
+## Adding a New Block Type
+
+First you need to create the block file in blocks, which should offer:
+- The block type string;
+- The block data interface;
+- The convert function.
+
+Then add the convert function to `tagBlockMap` in "extract-content.ts".
