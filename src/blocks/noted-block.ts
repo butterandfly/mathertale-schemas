@@ -6,6 +6,7 @@ export const FactType = 'FACT' as const;
 export const TheoremType = 'THEOREM' as const;
 export const PropositionType = 'PROPOSITION' as const;
 export const RemarkType = 'REMARK' as const;
+export const LemmaType = 'LEMMA' as const;
 
 export type NotedData = Omit<BlockSchema, 'questionData'>;
 
@@ -24,4 +25,4 @@ export const convertFactBlockNode = (rawData: RawData) => convertNotedBlockNode(
 export const convertTheoremBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, TheoremType);
 export const convertPropositionBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, PropositionType);
 export const convertRemarkBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, RemarkType);
-
+export const convertLemmaBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, LemmaType);

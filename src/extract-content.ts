@@ -1,4 +1,5 @@
-import { convertDefinitionBlockNode, convertFactBlockNode, convertPropositionBlockNode, convertRemarkBlockNode, convertTheoremBlockNode } from './blocks/noted-block';
+import { convertContradictionBlockNode } from './blocks/contradiction-block';
+import { convertDefinitionBlockNode, convertFactBlockNode, convertLemmaBlockNode, convertPropositionBlockNode, convertRemarkBlockNode, convertTheoremBlockNode } from './blocks/noted-block';
 import { convertParaBlockNode } from './blocks/para-block';
 import { convertProofReorderBlockNode } from './blocks/proof-reorder-block';
 import { convertScratchWorkBlockNode } from './blocks/scratch-work-block';
@@ -29,9 +30,11 @@ const tagBlockMap: Record<string, BlockNodeConverter> = {
   'theorem': convertTheoremBlockNode,
   'proposition': convertPropositionBlockNode,
   'remark': convertRemarkBlockNode,
+  'lemma': convertLemmaBlockNode,
   'single_choice': convertSingleChoiceBlockNode,
   'scratch_work': convertScratchWorkBlockNode,
   'proof_reorder': convertProofReorderBlockNode,
+  'contradiction': convertContradictionBlockNode,
 }
 
 
@@ -75,10 +78,7 @@ export function convertSectionNode(sectionNode: CanvasNode, canvasData: CanvasDa
   const lines = sectionNode.text.trim().split('\n');
   const firstLine = lines[0];
   const {tag, name, id} = getMetadata(firstLine);
-  if (!id) {
-    throw new Error('Section id is required: ' + firstLine);
-  }
-
+  
   if (tag !== 'section') {
     throw new Error('Invalid section tag: ' + tag);
   }
