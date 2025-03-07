@@ -107,6 +107,50 @@ function buildJourneyShortsFromJourneys(journeys: JourneySchema[]): JourneyShort
     return journeys.map(({ questShortMap, ...journeyShort }) => journeyShort);
 }
 
+/**
+ * Build demo quest data from a demo quest canvas file.
+ * @param rootDir - The root directory where the demo quest canvas file is located.
+ * @param outputDir - The directory to output the demo quest data to.
+ * @returns The demo quest data.
+ */
+export function buildDemoQuest(rootDir: string, outputDir: string = 'data'): QuestSchema {
+    // Ensure output directory exists
+    if (!existsSync(outputDir)) {
+        mkdirSync(outputDir);
+    }
+
+    // Create a demo directory in the output directory
+    const demoDir = path.join(outputDir, 'demo');
+    if (!existsSync(demoDir)) {
+        mkdirSync(demoDir);
+    }
+
+    // Direct path to the demo quest canvas file
+    const demoQuestPath = path.join(rootDir, 'Demo.quest.canvas');
+    
+    if (!existsSync(demoQuestPath)) {
+        throw new Error(`Demo quest canvas file not found at ${demoQuestPath}`);
+    }
+
+    try {
+        // Read and parse the demo quest canvas file
+        const demoQuestCanvas = JSON.parse(readFileSync(demoQuestPath, 'utf8'));
+        const demoQuest = convertQuestCanvas(demoQuestCanvas);
+
+        // Save the demo quest data with the simplified name
+        writeFileSync(
+            path.join(demoDir, 'quest-demo.json'),
+            JSON.stringify(demoQuest, null, 2)
+        );
+
+        console.log(`Demo quest data built successfully: ${demoQuest.name}`);
+        return demoQuest;
+    } catch (error) {
+        console.error(`Error building demo quest data: ${error}`);
+        throw error; // Re-throw the error to propagate it
+    }
+}
+
 export function buildDatabase(rootDir: string, outputDir: string = 'data'): void {
     // 确保输出目录存在
     if (!existsSync(outputDir)) {
@@ -133,4 +177,7 @@ export function buildDatabase(rootDir: string, outputDir: string = 'data'): void
         path.join(outputDir, 'journeys.json'),
         JSON.stringify(journeyShorts, null, 2)
     );
+
+    // Build demo quest data
+    buildDemoQuest(rootDir, outputDir);
 }

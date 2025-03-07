@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { buildDatabase, buildJourneyData, findAllAvailableJourneyFilesRecursive } from './build-data'
+import { buildDatabase, buildJourneyData, findAllAvailableJourneyFilesRecursive, buildDemoQuest } from './build-data'
 import { existsSync, readFileSync, rmSync } from 'fs'
+import path from 'path'
 
 describe('buildJourneyData', () => {
     it('should build journey data correctly', () => {
@@ -34,6 +35,34 @@ describe('findAllJourneyFiles', () => {
     })
 })
 
+describe('buildDemoQuest', () => {
+    beforeEach(() => {
+        if (existsSync('./test/output')) {
+            rmSync('./test/output', { recursive: true })
+        }
+    })
+
+    it('should build demo quest data correctly', () => {
+        const demoQuest = buildDemoQuest('./test', './test/output')
+        
+        expect(demoQuest).toBeDefined()
+        expect(demoQuest.id).toEqual('00000000-0000-0000-0000-000000000001')
+        expect(demoQuest.name).toEqual('Demo Quest')
+        
+        // Check if the file was created
+        const demoQuestPath = path.join('./test/output/demo', 'quest-demo.json')
+        expect(existsSync(demoQuestPath)).toBeTruthy()
+        
+        // Check the content of the file
+        const demoQuestData = JSON.parse(readFileSync(demoQuestPath, 'utf8'))
+        expect(demoQuestData.name).toEqual('Demo Quest')
+        expect(demoQuestData.sections.length).toEqual(1)
+        expect(demoQuestData.sections[0].name).toEqual('Demo Section')
+        expect(demoQuestData.sections[0].blocks.length).toEqual(1)
+        expect(demoQuestData.sections[0].blocks[0].type).toEqual('PARA')
+    })
+})
+
 describe('buildDatabase', () => {
     beforeEach(() => {
         if (existsSync('./test/output')) {
@@ -44,9 +73,17 @@ describe('buildDatabase', () => {
     it('should build the database correctly', () => {
         buildDatabase('./test', './test/output')
 
+        // Check journeys.json
         const data = readFileSync('./test/output/journeys.json', 'utf8')
         const journeys = JSON.parse(data)
         expect(journeys.length).toEqual(1)
         expect(journeys[0].name).toEqual('Journey 1')
+        
+        // Check demo quest
+        const demoQuestPath = path.join('./test/output/demo', 'quest-demo.json')
+        expect(existsSync(demoQuestPath)).toBeTruthy()
+        
+        const demoQuestData = JSON.parse(readFileSync(demoQuestPath, 'utf8'))
+        expect(demoQuestData.name).toEqual('Demo Quest')
     })
 })

@@ -33,4 +33,4 @@ First you need to create the block file in blocks, which should offer:
 - The block data interface;
 - The convert function.
 
-Then add the convert function to `tagBlockMap` in "extract-content.ts".
+Then add the convert function to `tagBlockMap` in "extract-content.ts". Also you need to export those types in "index.ts".

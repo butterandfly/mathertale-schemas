@@ -21,6 +21,7 @@ export {SingleChoiceType, SingleChoiceData, Choice} from './blocks/single-choice
 export { NotedData, DefinitionType, FactType, TheoremType, PropositionType, RemarkType } from './blocks/noted-block';
 export { ProofReorderType, ProofReorderData, OrderItem } from './blocks/proof-reorder-block';
 export { ScratchWorkType, ScratchWorkData } from './blocks/scratch-work-block';
+export { ContradictionType, ContradictionData, ContradictionChoice } from './blocks/contradiction-block';
 
 // 从 node-validator 导出
 export {
