@@ -11,7 +11,7 @@ export interface ContradictionChoice {
 
 export interface ContradictionQuestionData {
   choices: ContradictionChoice[];
-  answer: Set<string>; // Set of keys from choices
+  answer: string[]; // Array of keys from choices
   explanation: string;
 }
 
@@ -106,17 +106,17 @@ export function convertContradiction(rawContent: string): {
     throw new Error('choices section is empty: ' + rawContent);
   }
   
-  // Process the answer section: convert comma-separated keys to a Set
-  const answer = new Set<string>();
+  // Process the answer section: convert comma-separated keys to an array
+  const answer: string[] = [];
   if (answerRaw) {
     answerRaw.split(',').map(key => key.trim()).forEach(key => {
-      if (key) {
-        answer.add(key);
+      if (key && !answer.includes(key)) {
+        answer.push(key);
       }
     });
   }
 
-  if (answer.size !== 2) {
+  if (answer.length !== 2) {
     throw new Error('answer must be 2 keys: ' + rawContent);
   }
 

@@ -94,9 +94,14 @@ export function convertSingleChoice(rawContent: string): {
   }
 
   choicesRaw.split('\n').forEach(line => {
-    const [key, value] = line.split(':').map(s => s.trim());
-    if (key && value) {
-      choices.push({ key, content: value });
+    // Split only at the first colon to handle content that may contain colons
+    const colonIndex = line.indexOf(':');
+    if (colonIndex > 0) {
+      const key = line.substring(0, colonIndex).trim();
+      const content = line.substring(colonIndex + 1).trim();
+      if (key && content) {
+        choices.push({ key, content });
+      }
     }
   });
 

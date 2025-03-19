@@ -37,10 +37,10 @@ It can also have multiple lines.`;
       expect(result.questionData.choices[2]).toEqual({ key: 'c', content: 'Third choice' });
       expect(result.questionData.choices[3]).toEqual({ key: 'd', content: 'Fourth choice' });
       
-      // Check answer (Set)
-      expect(result.questionData.answer.size).toBe(2);
-      expect(result.questionData.answer.has('a')).toBe(true);
-      expect(result.questionData.answer.has('c')).toBe(true);
+      // Check answer (Array)
+      expect(result.questionData.answer).toHaveLength(2);
+      expect(result.questionData.answer).toContain('a');
+      expect(result.questionData.answer).toContain('c');
       
       // Check explanation
       expect(result.questionData.explanation).toBe('This is the explanation.\nIt can also have multiple lines.');
@@ -63,7 +63,9 @@ a, b`;
       
       expect(result.blockContent).toBe('This is a contradiction question.');
       expect(result.questionData.choices).toHaveLength(2);
-      expect(result.questionData.answer.size).toBe(2);
+      expect(result.questionData.answer).toHaveLength(2);
+      expect(result.questionData.answer).toContain('a');
+      expect(result.questionData.answer).toContain('b');
       expect(result.questionData.explanation).toBe('This is the explanation.');
     });
 
@@ -83,9 +85,9 @@ Explanation`;
 
       const result = convertContradiction(rawContent);
       
-      expect(result.questionData.answer.size).toBe(2);
-      expect(result.questionData.answer.has('a')).toBe(true);
-      expect(result.questionData.answer.has('c')).toBe(true);
+      expect(result.questionData.answer).toHaveLength(2);
+      expect(result.questionData.answer).toContain('a');
+      expect(result.questionData.answer).toContain('c');
     });
 
     it('should throw error if choices section is missing', () => {
@@ -193,7 +195,9 @@ Explanation`
       expect(result.type).toBe(ContradictionType);
       expect(result.content).toBe('Question');
       expect(result.questionData.choices).toHaveLength(2);
-      expect(result.questionData.answer.size).toBe(2);
+      expect(result.questionData.answer).toHaveLength(2);
+      expect(result.questionData.answer).toContain('a');
+      expect(result.questionData.answer).toContain('b');
       expect(result.questionData.explanation).toBe('Explanation');
     });
   });

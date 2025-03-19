@@ -18,7 +18,7 @@ export { isValidUUID, Metadata, RawData, BlockNodeConverter } from './convert-he
 // Blocks 
 export {ParaType, ParaData} from './blocks/para-block';
 export {SingleChoiceType, SingleChoiceData, Choice} from './blocks/single-choice-block';
-export { NotedData, DefinitionType, FactType, TheoremType, PropositionType, RemarkType } from './blocks/noted-block';
+export { NotedData, DefinitionType, FactType, TheoremType, PropositionType, RemarkType, LemmaType } from './blocks/noted-block';
 export { ProofReorderType, ProofReorderData, OrderItem } from './blocks/proof-reorder-block';
 export { ScratchWorkType, ScratchWorkData } from './blocks/scratch-work-block';
 export { ContradictionType, ContradictionData, ContradictionChoice } from './blocks/contradiction-block';

@@ -105,4 +105,39 @@ describe('SingleChoiceBlock', () => {
 
         expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
     });
+    
+    it('should handle choices with colons in their content', () => {
+        const rawData: RawData = {
+          id: 'fake-id-with-colons',
+          tag: 'single_choice',
+          rawContent: `
+    What is the correct syntax for defining a constant in JavaScript?
+    
+    choices:
+    a: var x = 10
+    b: let x = 10
+    c: const x = 10
+    d: x: 10
+    e: Choice with: colon in the middle
+    f: Choice with multiple: colons: in content
+    
+    answer:
+    c
+    
+    explanation:
+    The const keyword is used to define constants in JavaScript.`
+        };
+        
+        const block = convertSingleChoiceBlockNode(rawData);
+        
+        // Verify that choices with colons are parsed correctly
+        expect(block.questionData.choices).toEqual([
+          { key: 'a', content: 'var x = 10' },
+          { key: 'b', content: 'let x = 10' },
+          { key: 'c', content: 'const x = 10' },
+          { key: 'd', content: 'x: 10' },
+          { key: 'e', content: 'Choice with: colon in the middle' },
+          { key: 'f', content: 'Choice with multiple: colons: in content' }
+        ]);
+    });
 });
