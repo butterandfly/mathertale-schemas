@@ -1,4 +1,5 @@
 import { BlockSchema } from "./schemas";
+import { Token } from 'marked';
 
 export interface CanvasNode {
   id: string;
@@ -24,6 +25,13 @@ export interface RawData {
   tag: string;
   name?: string;
   rawContent: string;
+}
+
+export interface MarkdownBlockRaw {
+  tag: string;
+  name?: string;
+  id: string;
+  rawTokens: Token[];
 }
 
 export interface Metadata {
