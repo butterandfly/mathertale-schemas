@@ -1,6 +1,6 @@
-import { RawData, MarkdownBlockRaw } from '../convert-helper';
+import { RawData } from '../convert-helper';
 import { BlockSchema } from '../schemas';
-import { extractProperties } from '../convert-quest-markdown';
+import { extractProperties, MarkdownBlockRaw } from '../convert-markdown-helper';
 
 export type ParaData = Omit<BlockSchema, 'name' | 'questionData'>;
 export const ParaType = 'PARA' as const;

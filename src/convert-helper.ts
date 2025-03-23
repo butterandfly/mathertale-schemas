@@ -27,13 +27,6 @@ export interface RawData {
   rawContent: string;
 }
 
-export interface MarkdownBlockRaw {
-  tag: string;
-  name?: string;
-  id: string;
-  rawTokens: Token[];
-}
-
 export interface Metadata {
   tag: string;
   name: string;

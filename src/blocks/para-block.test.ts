@@ -42,7 +42,7 @@ describe('para-block', () => {
 
   describe('convertParaMarkdown', () => {
     it('should convert markdown block to para block', () => {
-      const markdownContent = '#### content\nTest content';
+      const markdownContent = 'Test content';
       const tokens = marked.lexer(markdownContent);
       
       const markdownBlock: MarkdownBlockRaw = {
