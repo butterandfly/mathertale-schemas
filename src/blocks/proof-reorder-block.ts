@@ -1,6 +1,8 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
+import { extractProperties, MarkdownBlockRaw } from "../convert-markdown-helper";
+import { marked } from 'marked';
 
 export const ProofReorderType = 'PROOF_REORDER' as const;
 
@@ -68,3 +70,51 @@ export function convertProofReorderBlockNode(rawData: RawData): ProofReorderData
     },
   }
 }
+
+/**
+ * Markdown format for proof reorder block
+ * 
+ * {content}
+ * 
+ * #### Part 1
+ * {part-1 content}
+ * 
+ * #### Part 2
+ * {part-2 content}
+ * 
+ * #### Part 3
+ * {part-3 content}
+ * 
+ * #### Question Order
+ * 3,1,2
+ * 
+ */
+
+export function convertProofReorderMarkdown(markdown: MarkdownBlockRaw): ProofReorderData {
+  const { content, properties } = extractProperties(markdown.rawTokens);
+
+  // Get all parts from properties
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(properties)) {
+    if (key.toLowerCase().startsWith('part ')) {
+      parts.push(value.trim());
+    }
+  }
+
+  // Get question order
+  const questionOrder = properties['question order']?.trim() || '';
+
+  return {
+    id: markdown.id,
+    type: ProofReorderType,
+    content,
+    questionData: {
+      orderItems: parts.map((part, index) => ({
+        id: `${index + 1}`,
+        content: part,
+      })),
+      questionOrder,
+    },
+  };
+}
+

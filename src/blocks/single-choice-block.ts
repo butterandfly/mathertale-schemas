@@ -1,6 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
+import { extractProperties, MarkdownBlockRaw } from '../convert-markdown-helper';
 
 export const SingleChoiceType = 'SINGLE_CHOICE' as const;
 
@@ -54,7 +55,7 @@ export function convertSingleChoiceBlockNode(rawData: RawData): SingleChoiceData
  * ```
  * 
  * 注意：
- * 1. 内容中的关键字（choice:, answer:, explanation:）必须独占一行
+ * 1. 内容中的关键字（choices:, answer:, explanation:）必须独占一行
  * 2. 关键字的顺序可以任意
  * 3. 每个部分都支持多行文本和LaTeX内容
  * 4. 选项格式必须为 "字母: 选项内容"
@@ -117,4 +118,55 @@ export function convertSingleChoice(rawContent: string): {
   };
   
   return { blockContent, questionData };
+}
+
+/**
+ * Markdown format for single choice block
+ * 
+ * Input format example:
+ * ```
+ * This is the question content.
+ * 
+ * #### Choices
+ * a: First choice with $\alpha$
+ * b: Second choice with $\beta$
+ * c: Third choice with $\gamma$
+ * 
+ * #### Answer
+ * b
+ * 
+ * #### Explanation
+ * This is the explanation.
+ * It can also have multiple lines and LaTeX content.
+ * ```
+*/
+export function convertSingleChoiceMarkdown(block: MarkdownBlockRaw): SingleChoiceData {
+  const { content, properties } = extractProperties(block.rawTokens);
+  
+  // Parse choices from the choices property
+  const choices: Choice[] = [];
+  if (properties.choices) {
+    const choiceLines = properties.choices.split('\n');
+    choiceLines.forEach((line: string) => {
+      const colonIndex = line.indexOf(':');
+      if (colonIndex > 0) {
+        const key = line.substring(0, colonIndex).trim();
+        const content = line.substring(colonIndex + 1).trim();
+        if (key && content) {
+          choices.push({ key, content });
+        }
+      }
+    });
+  }
+
+  return {
+    id: block.id,
+    type: SingleChoiceType,
+    content: properties.content || content || '',
+    questionData: {
+      choices,
+      answer: properties.answer?.trim() || '',
+      explanation: properties.explanation || ''
+    }
+  };
 }

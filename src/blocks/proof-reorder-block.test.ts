@@ -1,4 +1,5 @@
-import { convertProofReorderBlockNode, ProofReorderType } from './proof-reorder-block';
+import { marked } from 'marked';
+import { convertProofReorderBlockNode, ProofReorderType, convertProofReorderMarkdown } from './proof-reorder-block';
 import { expect, describe, it } from "vitest";
 
 
@@ -127,6 +128,147 @@ question-order:
       id: 'test-id',
       tag: 'proof-reorder',
       rawContent,
+    });
+
+    expect(result).toEqual({
+      id: 'test-id',
+      type: ProofReorderType,
+      content: 'Prove that $\\sum_{i=1}^n i = \\frac{n(n+1)}{2}$',
+      questionData: {
+        orderItems: [
+          { id: '1', content: 'Let $S_n = \\sum_{i=1}^n i$' },
+          { id: '2', content: 'Then $S_n = \\frac{n(n+1)}{2}$' },
+        ],
+        questionOrder: '1,2',
+      },
+    });
+  });
+});
+
+describe('convertProofReorderMarkdown', () => {
+  it('should convert a valid markdown proof reorder block', () => {
+    const markdown = `Here's a proof that needs to be reordered.
+
+#### Part 1
+First, we establish that x = 1.
+
+#### Part 2
+Then, we can prove that y = 2.
+
+#### Part 3
+Finally, we conclude z = 3.
+
+#### Question Order
+3,1,2`;
+
+    const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      tag: 'proof-reorder',
+      rawTokens: marked.lexer(markdown),
+    });
+
+    expect(result).toEqual({
+      id: 'test-id',
+      type: ProofReorderType,
+      content: "Here's a proof that needs to be reordered.",
+      questionData: {
+        orderItems: [
+          { id: '1', content: 'First, we establish that x = 1.' },
+          { id: '2', content: 'Then, we can prove that y = 2.' },
+          { id: '3', content: 'Finally, we conclude z = 3.' },
+        ],
+        questionOrder: '3,1,2',
+      },
+    });
+  });
+
+  it('should handle empty content before parts in markdown', () => {
+    const markdown = `#### Part 1
+First step
+
+#### Part 2
+Second step
+
+#### Question Order
+2,1`;
+
+      const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      tag: 'proof-reorder',
+      rawTokens: marked.lexer(markdown),
+    });
+
+    expect(result).toEqual({
+      id: 'test-id',
+      type: ProofReorderType,
+      content: '',
+      questionData: {
+        orderItems: [
+          { id: '1', content: 'First step' },
+          { id: '2', content: 'Second step' },
+        ],
+        questionOrder: '2,1',
+      },
+    });
+  });
+
+  it('should handle parts with multiple lines in markdown', () => {
+    const markdown = `Main content here.
+
+#### Part 1
+This is step one.
+It has multiple lines.
+And some math: $x^2$.
+
+#### Part 2
+This is step two.
+Also with multiple lines.
+
+#### Question Order
+2,1`;
+
+    const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      tag: 'proof-reorder',
+      rawTokens: marked.lexer(markdown),
+    });
+
+    expect(result).toEqual({
+      id: 'test-id',
+      type: ProofReorderType,
+      content: 'Main content here.',
+      questionData: {
+        orderItems: [
+          { 
+            id: '1', 
+            content: 'This is step one.\nIt has multiple lines.\nAnd some math: $x^2$.' 
+          },
+          { 
+            id: '2', 
+            content: 'This is step two.\nAlso with multiple lines.' 
+          },
+        ],
+        questionOrder: '2,1',
+      },
+    });
+  });
+
+  it('should handle LaTeX content in markdown', () => {
+    const markdown = `Prove that $\\sum_{i=1}^n i = \\frac{n(n+1)}{2}$
+
+#### Part 1
+Let $S_n = \\sum_{i=1}^n i$
+
+#### Part 2
+Then $S_n = \\frac{n(n+1)}{2}$
+
+#### Question Order
+1,2`;
+
+    const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      tag: 'proof-reorder',
+      rawTokens: marked.lexer(markdown),
     });
 
     expect(result).toEqual({

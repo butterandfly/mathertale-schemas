@@ -200,6 +200,44 @@ This is a remark block.
 id: lemma-block
 
 This is a lemma block.
+
+### single_choice:
+id: single-choice-block-all-blocks
+
+What is 2 + 2?
+
+#### Choices
+a: 3
+b: 4
+c: 5
+
+#### Answer
+b
+
+#### Explanation
+Basic arithmetic: 2 + 2 = 4
+
+### proof_reorder: Proof Reorder Block
+id: proof-reorder-block-all-blocks
+
+Prove that 2 + 2 = 4.
+
+#### Part 1
+1
+
+#### Part 2
+2
+
+#### Part 3
+3
+
+#### Question Order
+3,1,2
+
+### scratch_work: Scratch Work Block
+id: scratch-work-block-all-blocks
+
+Let's do some scratch work.
 `
 
     const result = convertQuestMarkdown(markdown);
@@ -232,7 +270,31 @@ This is a lemma block.
     expect(lemmaBlock.type).toBe('LEMMA');
     expect(lemmaBlock.content).toBe('This is a lemma block.');
     
-    
+    const singleChoiceBlock = result.sections[0].blocks[7];
+    expect(singleChoiceBlock.type).toBe('SINGLE_CHOICE');
+    expect(singleChoiceBlock.content).toBe('What is 2 + 2?');
+    expect(singleChoiceBlock.questionData.choices).toEqual([
+      { key: 'a', content: '3' },
+      { key: 'b', content: '4' },
+      { key: 'c', content: '5' }
+    ]);
+    expect(singleChoiceBlock.questionData.answer).toBe('b');
+    expect(singleChoiceBlock.questionData.explanation).toBe('Basic arithmetic: 2 + 2 = 4');
+
+    const proofReorderBlock = result.sections[0].blocks[8];
+    expect(proofReorderBlock.type).toBe('PROOF_REORDER');
+    expect(proofReorderBlock.content).toBe('Prove that 2 + 2 = 4.');
+    expect(proofReorderBlock.questionData.orderItems).toEqual([
+      { id: '1', content: '1' },
+      { id: '2', content: '2' },
+      { id: '3', content: '3' }
+    ]);
+    expect(proofReorderBlock.questionData.questionOrder).toBe('3,1,2');
+
+    const scratchWorkBlock = result.sections[0].blocks[9];
+    expect(scratchWorkBlock.type).toBe('SCRATCH_WORK');
+    expect(scratchWorkBlock.content).toBe('Let\'s do some scratch work.');
   });
+
 });
 

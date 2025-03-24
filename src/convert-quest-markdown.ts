@@ -4,7 +4,9 @@ import { marked, Token } from 'marked';
 import { MarkdownBlockRaw, parseQuestHeader } from "./convert-markdown-helper";
 import { convertFactMarkdown, convertLemmaMarkdown, convertPropositionMarkdown, convertRemarkMarkdown, convertTheoremMarkdown } from "./blocks/noted-block";
 import { convertDefinitionMarkdown } from "./blocks/noted-block";
-
+import { convertSingleChoiceMarkdown } from "./blocks/single-choice-block";
+import { convertProofReorderMarkdown } from "./blocks/proof-reorder-block";
+import { convertScratchWorkMarkdown } from "./blocks/scratch-work-block";
 // 定义转换函数的类型
 type ConvertFunction = (block: MarkdownBlockRaw) => BlockSchema;
 
@@ -16,7 +18,10 @@ const convertBlockMap: Record<string, ConvertFunction> = {
   'theorem': convertTheoremMarkdown,
   'proposition': convertPropositionMarkdown,
   'remark': convertRemarkMarkdown,
-  'lemma': convertLemmaMarkdown
+  'lemma': convertLemmaMarkdown,
+  'single_choice': convertSingleChoiceMarkdown,
+  'proof_reorder': convertProofReorderMarkdown,
+  'scratch_work': convertScratchWorkMarkdown
 };
 
 interface MarkdownSection {
@@ -65,8 +70,8 @@ function parseMarkdownQuest(markdown: string): MarkdownQuest {
     if (token.type === 'heading') {
       // 新的section
       if (token.depth === 2) {
-        // 保存上一个section（如果存在）
-        if (currentSection && blockTokens.length > 0) {
+        // 保存上一个block（如果存在）
+        if (blockTokens.length > 0 && currentSection) {
           currentSection.blocks.push({
             tag: currentBlockTag,
             name: currentBlockName || undefined,
@@ -107,6 +112,10 @@ function parseMarkdownQuest(markdown: string): MarkdownQuest {
         currentBlockId = ''; // 当遇到id元数据时设置
         
         blockTokens = [];
+      }
+      // 保留h4标题，它们是block的一部分
+      else if (token.depth >= 4) {
+        blockTokens.push(token);
       }
     } else if (token.type === 'paragraph' && token.text.startsWith('id:')) {
       // 只处理block的id，不影响quest的id
