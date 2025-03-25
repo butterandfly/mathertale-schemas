@@ -238,7 +238,24 @@ Prove that 2 + 2 = 4.
 id: scratch-work-block-all-blocks
 
 Let's do some scratch work.
-`
+
+### contradiction: Contradiction Block
+id: contradiction-block-all-blocks
+
+This is a contradiction block.
+
+#### Choices
+a: First choice
+b: Second choice
+c: Third choice
+d: Fourth choice
+
+#### Answer
+a, c
+
+#### Explanation
+This is the explanation.
+`;
 
     const result = convertQuestMarkdown(markdown);
 
@@ -294,6 +311,18 @@ Let's do some scratch work.
     const scratchWorkBlock = result.sections[0].blocks[9];
     expect(scratchWorkBlock.type).toBe('SCRATCH_WORK');
     expect(scratchWorkBlock.content).toBe('Let\'s do some scratch work.');
+
+    const contradictionBlock = result.sections[0].blocks[10];
+    expect(contradictionBlock.type).toBe('CONTRADICTION');
+    expect(contradictionBlock.content).toBe('This is a contradiction block.');
+    expect(contradictionBlock.questionData.choices).toEqual([
+      { key: 'a', content: 'First choice' },
+      { key: 'b', content: 'Second choice' }, 
+      { key: 'c', content: 'Third choice' },
+      { key: 'd', content: 'Fourth choice' }
+    ]);
+    expect(contradictionBlock.questionData.answer).toEqual(['a', 'c']);
+    expect(contradictionBlock.questionData.explanation).toBe('This is the explanation.');
   });
 
 });

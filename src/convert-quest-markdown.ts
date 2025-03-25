@@ -7,6 +7,7 @@ import { convertDefinitionMarkdown } from "./blocks/noted-block";
 import { convertSingleChoiceMarkdown } from "./blocks/single-choice-block";
 import { convertProofReorderMarkdown } from "./blocks/proof-reorder-block";
 import { convertScratchWorkMarkdown } from "./blocks/scratch-work-block";
+import { convertContradictionMarkdown } from "./blocks/contradiction-block";
 // 定义转换函数的类型
 type ConvertFunction = (block: MarkdownBlockRaw) => BlockSchema;
 
@@ -21,7 +22,8 @@ const convertBlockMap: Record<string, ConvertFunction> = {
   'lemma': convertLemmaMarkdown,
   'single_choice': convertSingleChoiceMarkdown,
   'proof_reorder': convertProofReorderMarkdown,
-  'scratch_work': convertScratchWorkMarkdown
+  'scratch_work': convertScratchWorkMarkdown,
+  'contradiction': convertContradictionMarkdown
 };
 
 interface MarkdownSection {

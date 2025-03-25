@@ -1,6 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
+import { MarkdownBlockRaw, extractProperties } from "../convert-markdown-helper";
 
 export const ContradictionType = 'CONTRADICTION' as const;
 
@@ -136,3 +137,80 @@ export function convertContradiction(rawContent: string): {
   
   return { blockContent, questionData };
 } 
+
+/**
+ * Markdown format for contradiction block
+ * 
+ * ```
+ * This is the question content.
+ * It can have multiple lines and LaTeX content like $x^2$.
+ * 
+ * #### Choices
+ * a: First choice with $\alpha$
+ * b: Second choice with $\beta$
+ * c: Third choice with $\gamma$
+ * d: Fourth choice with $\delta$
+ * 
+ * #### Answer
+ * a, c
+ * 
+ * #### Explanation
+ * This is the explanation.
+ * It can also have multiple lines and LaTeX content.
+ * ```
+ */
+export function convertContradictionMarkdown(markdown: MarkdownBlockRaw): ContradictionData {
+  const { content, properties } = extractProperties(markdown.rawTokens);
+  
+  // Parse choices from the choices property
+  if (!properties.choices) {
+    throw new Error('choices section is required: ' + markdown.rawTokens);
+  }
+  const choices: ContradictionChoice[] = [];
+
+  const choiceLines = properties.choices.split('\n');
+  choiceLines.forEach((line: string) => {
+    const colonIndex = line.indexOf(':');
+    if (colonIndex > 0) {
+      const key = line.substring(0, colonIndex).trim();
+      const content = line.substring(colonIndex + 1).trim();
+      if (key && content) {
+        choices.push({ key, content });
+      }
+    }
+  });
+
+  // Parse answer from the answer property
+  if (!properties.answer) {
+    throw new Error('answer section is required: ' + markdown.rawTokens);
+  }
+  const answer: string[] = [];
+  properties.answer.split(',').map((key: string) => key.trim()).forEach((key: string) => {
+    if (key && !answer.includes(key)) {
+        answer.push(key);
+      }
+  });
+
+  // Validate answer length
+  if (answer.length !== 2) {
+    throw new Error('answer must be 2 keys: ' + markdown.rawTokens);
+  }
+
+  // Validate that all answer keys exist in choices
+  for (const key of answer) {
+    if (!choices.some(choice => choice.key === key)) {
+      throw new Error(`answer key "${key}" does not exist in choices: ` + markdown.rawTokens);
+    }
+  }
+
+  return {
+    id: markdown.id,
+    type: ContradictionType,
+    content: properties.content || content || '',
+    questionData: {
+      choices,
+      answer,
+      explanation: properties.explanation || ''
+    }
+  };
+}
