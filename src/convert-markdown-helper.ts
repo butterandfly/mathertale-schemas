@@ -276,3 +276,16 @@ export function parseQuestHeader(tokens: Token[]): { name: string; id: string; d
     return { content, properties };
   }
   
+/**
+ * 检查必需的属性
+ * @param properties 属性对象
+ * @param requiredProperties 必需的属性列表
+ * @throws 如果缺少必需的属性，则抛出错误
+ */
+export function checkRequiredProperties(properties: Record<string, string>, requiredProperties: string[]): void {
+  requiredProperties.forEach((property: string) => {
+    if (!properties[property]) {
+      throw new Error(`${property} is required: ${JSON.stringify(properties)}`);
+    }
+  });
+}

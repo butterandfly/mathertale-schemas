@@ -284,4 +284,125 @@ Then $S_n = \\frac{n(n+1)}{2}$
       },
     });
   });
+
+  it('should convert markdown to proof reorder data', () => {
+    const markdown = `This is the proof content.
+It can have multiple lines.
+
+#### Part 1
+First part of the proof
+
+#### Part 2
+Second part of the proof
+
+#### Part 3
+Third part of the proof
+
+#### Question Order
+3,1,2`;
+
+    const tokens = marked.lexer(markdown);
+    const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'proof_reorder'
+    });
+
+    expect(result).toEqual({
+      id: 'test-id',
+      type: ProofReorderType,
+      content: 'This is the proof content.\nIt can have multiple lines.',
+      questionData: {
+        orderItems: [
+          { id: '1', content: 'First part of the proof' },
+          { id: '2', content: 'Second part of the proof' },
+          { id: '3', content: 'Third part of the proof' }
+        ],
+        questionOrder: '3,1,2'
+      }
+    });
+  });
+
+  it('should throw error when question order is missing', () => {
+    const markdown = `This is the proof content.
+
+#### Part 1
+First part of the proof
+
+#### Part 2
+Second part of the proof`;
+
+    const tokens = marked.lexer(markdown);
+    expect(() => convertProofReorderMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'proof_reorder'
+    })).toThrow('question order is required');
+  });
+
+  it('should throw error when no parts are provided', () => {
+    const markdown = `This is the proof content.
+
+#### Question Order
+3,1,2`;
+
+    const tokens = marked.lexer(markdown);
+    expect(() => convertProofReorderMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'proof_reorder'
+    })).toThrow('parts are required');
+  });
+
+  it('should handle content before any heading', () => {
+    const markdown = `Some content before any heading.
+More content here.
+
+#### Part 1
+First part of the proof
+
+#### Part 2
+Second part of the proof
+
+#### Question Order
+2,1`;
+
+    const tokens = marked.lexer(markdown);
+    const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'proof_reorder'
+    });
+
+    expect(result.content).toBe('Some content before any heading.\nMore content here.');
+  });
+
+  it('should handle parts with LaTeX content', () => {
+    const markdown = `Prove that $x^2 + y^2 = z^2$.
+
+#### Part 1
+Let $x = 3$ and $y = 4$
+
+#### Part 2
+Then $x^2 + y^2 = 9 + 16 = 25$
+
+#### Part 3
+Therefore $z = 5$ satisfies the equation
+
+#### Question Order
+1,2,3`;
+
+    const tokens = marked.lexer(markdown);
+    const result = convertProofReorderMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'proof_reorder'
+    });
+
+    expect(result.questionData.orderItems).toEqual([
+      { id: '1', content: 'Let $x = 3$ and $y = 4$' },
+      { id: '2', content: 'Then $x^2 + y^2 = 9 + 16 = 25$' },
+      { id: '3', content: 'Therefore $z = 5$ satisfies the equation' }
+    ]);
+  });
 }); 

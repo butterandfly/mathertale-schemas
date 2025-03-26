@@ -260,7 +260,7 @@ This is the explanation.`;
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
-      })).toThrow('choices section is required');
+      })).toThrow('choices is required');
     });
 
     it('should throw error when answer section is missing', () => {
@@ -278,7 +278,7 @@ This is the explanation.`;
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
-      })).toThrow('answer section is required');
+      })).toThrow('answer is required');
     });
 
     it('should throw error when answer length is not 2', () => {

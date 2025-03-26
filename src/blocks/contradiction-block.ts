@@ -1,7 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
-import { MarkdownBlockRaw, extractProperties } from "../convert-markdown-helper";
+import { MarkdownBlockRaw, extractProperties, checkRequiredProperties } from "../convert-markdown-helper";
 
 export const ContradictionType = 'CONTRADICTION' as const;
 
@@ -161,11 +161,10 @@ export function convertContradiction(rawContent: string): {
  */
 export function convertContradictionMarkdown(markdown: MarkdownBlockRaw): ContradictionData {
   const { content, properties } = extractProperties(markdown.rawTokens);
+
+  checkRequiredProperties(properties, ['choices', 'answer', 'explanation']);
   
   // Parse choices from the choices property
-  if (!properties.choices) {
-    throw new Error('choices section is required: ' + markdown.rawTokens);
-  }
   const choices: ContradictionChoice[] = [];
 
   const choiceLines = properties.choices.split('\n');
@@ -181,9 +180,6 @@ export function convertContradictionMarkdown(markdown: MarkdownBlockRaw): Contra
   });
 
   // Parse answer from the answer property
-  if (!properties.answer) {
-    throw new Error('answer section is required: ' + markdown.rawTokens);
-  }
   const answer: string[] = [];
   properties.answer.split(',').map((key: string) => key.trim()).forEach((key: string) => {
     if (key && !answer.includes(key)) {

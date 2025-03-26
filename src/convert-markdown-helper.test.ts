@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { marked } from 'marked';
-import { extractProperties, parseQuestHeader, tokensToMarkdown } from './convert-markdown-helper';
+import { extractProperties, parseQuestHeader, tokensToMarkdown, checkRequiredProperties } from './convert-markdown-helper';
 
 describe('tokensToMarkdown', () => {
   it('should convert tokens to markdown text', () => {
@@ -191,5 +191,63 @@ id: another-id`;
       id: '',
       desc: ''
     });
+  });
+});
+
+describe('checkRequiredProperties', () => {
+  it('should not throw error when all required properties exist', () => {
+    const properties = {
+      title: 'Test Title',
+      content: 'Test Content',
+      description: 'Test Description'
+    };
+
+    expect(() => checkRequiredProperties(properties, ['title', 'content'])).not.toThrow();
+  });
+
+  it('should throw error when a required property is missing', () => {
+    const properties = {
+      title: 'Test Title',
+      description: 'Test Description'
+    };
+
+    expect(() => checkRequiredProperties(properties, ['title', 'content']))
+      .toThrow('content is required');
+  });
+
+  it('should throw error when a required property is empty string', () => {
+    const properties = {
+      title: 'Test Title',
+      content: '',
+      description: 'Test Description'
+    };
+
+    expect(() => checkRequiredProperties(properties, ['title', 'content']))
+      .toThrow('content is required');
+  });
+
+  it('should throw error when multiple required properties are missing', () => {
+    const properties = {
+      description: 'Test Description'
+    };
+
+    expect(() => checkRequiredProperties(properties, ['title', 'content']))
+      .toThrow('title is required');
+  });
+
+  it('should handle empty properties object', () => {
+    const properties = {};
+
+    expect(() => checkRequiredProperties(properties, ['title', 'content']))
+      .toThrow('title is required');
+  });
+
+  it('should handle empty required properties array', () => {
+    const properties = {
+      title: 'Test Title',
+      content: 'Test Content'
+    };
+
+    expect(() => checkRequiredProperties(properties, [])).not.toThrow();
   });
 }); 

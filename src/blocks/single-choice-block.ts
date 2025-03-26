@@ -1,7 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
-import { extractProperties, MarkdownBlockRaw } from '../convert-markdown-helper';
+import { extractProperties, MarkdownBlockRaw, checkRequiredProperties } from '../convert-markdown-helper';
 
 export const SingleChoiceType = 'SINGLE_CHOICE' as const;
 
@@ -142,6 +142,8 @@ export function convertSingleChoice(rawContent: string): {
 */
 export function convertSingleChoiceMarkdown(block: MarkdownBlockRaw): SingleChoiceData {
   const { content, properties } = extractProperties(block.rawTokens);
+
+  checkRequiredProperties(properties, ['choices', 'answer']);
   
   // Parse choices from the choices property
   const choices: Choice[] = [];

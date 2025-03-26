@@ -219,7 +219,14 @@ Since $\\alpha = 1$ by definition.`;
   });
 
   it('should handle missing optional properties', () => {
-    const markdown = `Just a question without properties.`;
+    const markdown = `Just a question without properties.
+
+#### Choices
+a: First choice
+b: Second choice
+
+#### Answer
+b`;
 
     const block: MarkdownBlockRaw = {
       tag: 'single_choice',
@@ -234,10 +241,113 @@ Since $\\alpha = 1$ by definition.`;
       type: SingleChoiceType,
       content: 'Just a question without properties.',
       questionData: {
-        choices: [],
-        answer: '',
+        choices: [
+          { key: 'a', content: 'First choice' },
+          { key: 'b', content: 'Second choice' }
+        ],
+        answer: 'b',
         explanation: ''
       }
     });
+  });
+
+  it('should convert markdown to single choice data', () => {
+    const markdown = `This is the question content.
+It can have multiple lines and LaTeX content like $x^2$.
+
+#### Choices
+a: First choice with $\\alpha$
+b: Second choice with $\\beta$
+c: Third choice with $\\gamma$
+
+#### Answer
+b
+
+#### Explanation
+This is the explanation.
+It can also have multiple lines and LaTeX content.`;
+
+    const tokens = marked.lexer(markdown);
+    const result = convertSingleChoiceMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'single_choice'
+    });
+
+    expect(result).toEqual({
+      id: 'test-id',
+      type: SingleChoiceType,
+      content: 'This is the question content.\nIt can have multiple lines and LaTeX content like $x^2$.',
+      questionData: {
+        choices: [
+          { key: 'a', content: 'First choice with $\\alpha$' },
+          { key: 'b', content: 'Second choice with $\\beta$' },
+          { key: 'c', content: 'Third choice with $\\gamma$' }
+        ],
+        answer: 'b',
+        explanation: 'This is the explanation.\nIt can also have multiple lines and LaTeX content.'
+      }
+    });
+  });
+
+  it('should throw error when choices section is missing', () => {
+    const markdown = `This is the question content.
+
+#### Answer
+b
+
+#### Explanation
+This is the explanation.`;
+
+    const tokens = marked.lexer(markdown);
+    expect(() => convertSingleChoiceMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'single_choice'
+    })).toThrow('choices is required');
+  });
+
+  it('should throw error when answer section is missing', () => {
+    const markdown = `This is the question content.
+
+#### Choices
+a: First choice
+b: Second choice
+c: Third choice
+
+#### Explanation
+This is the explanation.`;
+
+    const tokens = marked.lexer(markdown);
+    expect(() => convertSingleChoiceMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'single_choice'
+    })).toThrow('answer is required');
+  });
+
+  it('should handle content before any heading', () => {
+    const markdown = `Some content before any heading.
+More content here.
+
+#### Choices
+a: First choice
+b: Second choice
+c: Third choice
+
+#### Answer
+b
+
+#### Explanation
+This is the explanation.`;
+
+    const tokens = marked.lexer(markdown);
+    const result = convertSingleChoiceMarkdown({
+      id: 'test-id',
+      rawTokens: tokens,
+      tag: 'single_choice'
+    });
+
+    expect(result.content).toBe('Some content before any heading.\nMore content here.');
   });
 });

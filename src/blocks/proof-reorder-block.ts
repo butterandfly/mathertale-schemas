@@ -1,7 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
-import { extractProperties, MarkdownBlockRaw } from "../convert-markdown-helper";
+import { extractProperties, MarkdownBlockRaw, checkRequiredProperties } from "../convert-markdown-helper";
 import { marked } from 'marked';
 
 export const ProofReorderType = 'PROOF_REORDER' as const;
@@ -93,6 +93,8 @@ export function convertProofReorderBlockNode(rawData: RawData): ProofReorderData
 export function convertProofReorderMarkdown(markdown: MarkdownBlockRaw): ProofReorderData {
   const { content, properties } = extractProperties(markdown.rawTokens);
 
+  checkRequiredProperties(properties, ['question order']);
+
   // Get all parts from properties
   const parts: string[] = [];
   for (const [key, value] of Object.entries(properties)) {
@@ -101,8 +103,11 @@ export function convertProofReorderMarkdown(markdown: MarkdownBlockRaw): ProofRe
     }
   }
 
-  // Get question order
-  const questionOrder = properties['question order']?.trim() || '';
+  if (parts.length === 0) {
+    throw new Error('parts are required');
+  }
+
+  const questionOrder = properties['question order'].trim();
 
   return {
     id: markdown.id,
