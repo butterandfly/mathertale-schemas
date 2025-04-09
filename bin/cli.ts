@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { buildJourneyDataFiles, buildDatabase } from './build-data';
+import { buildJourneyDataFiles, buildDatabase, buildAllSoloQuestData } from './build-data';
 
 const program = new Command();
 
@@ -55,6 +55,28 @@ program
       buildDatabase(dir, outputDir);
 
       spinner.succeed(chalk.green('Database built successfully!'));
+    } catch (error: any) {
+      spinner.fail(chalk.red(`Build failed: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('soloquests')
+  .description('Build solo quest markdown files')
+  .argument('<dir>', 'Root directory containing solo quest markdown files')
+  .option('-o, --output <dir>', 'Output directory')
+  .action(async (dir, options) => {
+    const spinner = ora('Building solo quests...').start();
+
+    try {
+      // Determine output directory
+      const outputDir = options.output || 'data';
+      
+      // Build solo quests data
+      buildAllSoloQuestData(dir, outputDir);
+
+      spinner.succeed(chalk.green('Solo quests built successfully!'));
     } catch (error: any) {
       spinner.fail(chalk.red(`Build failed: ${error.message}`));
       process.exit(1);

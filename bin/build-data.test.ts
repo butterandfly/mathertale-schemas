@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { buildDatabase, buildJourneyData, findAllAvailableJourneyFilesRecursive, buildDemoQuest } from './build-data'
+import { buildDatabase, buildJourneyData, findAllAvailableJourneyFilesRecursive, buildDemoQuest, buildAllSoloQuestData } from './build-data'
 import { existsSync, readFileSync, rmSync } from 'fs'
 import path from 'path'
+import { SoloQuestShortSchema } from '../src/schemas'
 
 describe('buildJourneyData', () => {
     it('should build journey data correctly', () => {
@@ -87,3 +88,29 @@ describe('buildDatabase', () => {
         expect(demoQuestData.name).toEqual('Demo Quest')
     })
 })
+
+describe('buildAllSoloQuestData', () => {
+    beforeEach(() => {
+        if (existsSync('./test/output/soloquests')) {
+            rmSync('./test/output/soloquests', { recursive: true });
+        }
+    });
+
+    it('should build solo quest data correctly', () => {
+        buildAllSoloQuestData('./test', './test/output');
+
+        // Check soloquests.json
+        const soloquestsData = readFileSync('./test/output/soloquests/soloquests.json', 'utf8');
+        const soloquests = JSON.parse(soloquestsData);
+        expect(soloquests.length).toBeGreaterThan(0);
+
+        // Check if individual solo quest files are created
+        soloquests.forEach((soloquest: SoloQuestShortSchema) => {
+            const soloquestPath = path.join('./test/output/soloquests', `soloquest-${soloquest.id}.json`);
+            expect(existsSync(soloquestPath)).toBeTruthy();
+
+            const soloquestData = JSON.parse(readFileSync(soloquestPath, 'utf8'));
+            expect(soloquestData.id).toEqual(soloquest.id);
+        });
+    });
+});

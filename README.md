@@ -34,3 +34,30 @@ First you need to create the block file in blocks, which should offer:
 - The convert function.
 
 Then add the convert function to `tagBlockMap` in "extract-content.ts". Also you need to export those types in "index.ts".
+
+## Templates
+
+```markdown
+# Quest: Quest Name
+id: test-id
+desc: This is a test quest.
+
+## Section: Introduction
+
+### para: Welcome
+id: para-welcome
+
+This is the welcome paragraph.
+
+## Section: Main Content
+
+### Para: Explanation
+id: para-explanation
+
+This explains the concept.
+
+### PARA: Conclusion
+id: para-conclusion
+
+This is the conclusion.
+```

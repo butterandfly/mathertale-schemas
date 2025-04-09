@@ -5,6 +5,8 @@ import path from "path"
 import { isJourneyCanvasAvailable } from "../src/extract-content"
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { JourneyShortSchema } from '../src/schemas';
+import { convertQuestMarkdown } from '../src/convert-quest-markdown';
+import { SoloQuestSchema, SoloQuestShortSchema } from '../src/schemas';
 
 /**
  * Build journey data from a journey canvas file.
@@ -151,27 +153,70 @@ export function buildDemoQuest(rootDir: string, outputDir: string = 'data'): Que
     }
 }
 
+export function buildAllSoloQuestData(rootDir: string, outputDir: string = 'data'): void {
+    const soloQuestDir = path.join(rootDir, 'soloquests');
+    const outputSoloQuestDir = path.join(outputDir, 'soloquests');
+
+    // Ensure output directory exists
+    if (!existsSync(outputSoloQuestDir)) {
+        mkdirSync(outputSoloQuestDir, { recursive: true });
+    }
+
+    // Find all solo quest markdown files
+    const soloQuestFiles = readdirSync(soloQuestDir).filter(file => file.endsWith('.quest.md'));
+    const allSoloQuests: SoloQuestSchema[] = [];
+
+    soloQuestFiles.forEach(file => {
+        const filePath = path.join(soloQuestDir, file);
+        const markdownContent = readFileSync(filePath, 'utf8');
+        const quest = convertQuestMarkdown(markdownContent);
+
+        // Manually add missing properties for SoloQuestSchema
+        const soloQuest: SoloQuestSchema = {
+            ...quest,
+            prerequisites: '', // Default or extract from markdown if available
+            tags: [] // Default or extract from markdown if available
+        };
+
+        // Save each solo quest as a JSON file
+        const soloQuestFileName = `soloquest-${soloQuest.id}.json`;
+        writeFileSync(
+            path.join(outputSoloQuestDir, soloQuestFileName),
+            JSON.stringify(soloQuest, null, 2)
+        );
+
+        allSoloQuests.push(soloQuest);
+    });
+
+    // Generate soloquests.json
+    const soloQuestShorts: SoloQuestShortSchema[] = allSoloQuests.map(({ sections, ...rest }) => rest);
+    writeFileSync(
+        path.join(outputSoloQuestDir, 'soloquests.json'),
+        JSON.stringify(soloQuestShorts, null, 2)
+    );
+}
+
 export function buildDatabase(rootDir: string, outputDir: string = 'data'): void {
-    // 确保输出目录存在
+    // Ensure output directory exists
     if (!existsSync(outputDir)) {
         mkdirSync(outputDir);
     }
 
-    // 使用递归函数找到所有可用的journey文件
+    // Use recursive function to find all available journey files
     const journeyFiles = findAllAvailableJourneyFilesRecursive(rootDir);
     const allJourneys: JourneySchema[] = [];
-    
-    // 处理每个journey文件
+
+    // Process each journey file
     journeyFiles.forEach(journeyFile => {
-        // 复用 buildJourneyDataFiles 来生成单个 journey 的文件
+        // Reuse buildJourneyDataFiles to generate files for a single journey
         buildJourneyDataFiles(journeyFile, outputDir);
-        
-        // 收集journey信息用于生成journeys.json
+
+        // Collect journey information for generating journeys.json
         const { journey } = buildJourneyData(journeyFile);
         allJourneys.push(journey);
     });
-    
-    // 生成并保存journeys.json
+
+    // Generate and save journeys.json
     const journeyShorts = buildJourneyShortsFromJourneys(allJourneys);
     writeFileSync(
         path.join(outputDir, 'journeys.json'),
@@ -180,4 +225,7 @@ export function buildDatabase(rootDir: string, outputDir: string = 'data'): void
 
     // Build demo quest data
     buildDemoQuest(rootDir, outputDir);
+
+    // Build solo quests data
+    buildAllSoloQuestData(rootDir, outputDir);
 }
