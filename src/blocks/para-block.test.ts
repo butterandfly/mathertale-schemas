@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { convertParaBlockNode, convertParaMarkdown, ParaType } from './para-block';
-import { RawData, MarkdownBlockRaw } from '../convert-helper';
+import { RawData } from '../convert-helper';
 import { marked } from 'marked';
+import { MarkdownBlockRaw } from '../convert-markdown-helper';
 
 describe('para-block', () => {
   describe('convertParaBlockNode', () => {

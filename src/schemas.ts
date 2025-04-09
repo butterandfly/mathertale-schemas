@@ -1,4 +1,3 @@
-
 export interface BlockSchema {
     id: string;
     content: string;
@@ -20,25 +19,24 @@ export enum Category {
     PROBABILITY = 'Probability and Statistics'
 }
 
-export interface QuestSchema {
-    // 基础信息
-    id: string;
-    name: string;
-    desc: string;
-    category?: Category;
+export interface BaseQuestSchema {
+  // 基础信息
+  id: string;
+  name: string;
+  desc: string;
+  category?: Category;
+  updatedAt: Date;
   
-    updatedAt: Date;
-    
-    // 任务内容
-    blockCount: number;
-  
-    // 依赖关系
-    dependentQuests: string[];
-    childQuests: string[];
-  
-    // sections
-    sections: SectionSchema[];
-  }
+  // 任务内容
+  blockCount: number;
+  sections: SectionSchema[];
+}
+
+export interface QuestSchema extends BaseQuestSchema {
+  // 依赖关系
+  dependentQuests: string[];
+  childQuests: string[];
+}
 
 export type QuestShortSchema = Omit<QuestSchema, 'sections'>;
 
@@ -65,3 +63,10 @@ export interface JourneySchema {
 }
 
 export type JourneyShortSchema = Omit<JourneySchema, 'questShortMap'>;
+
+export interface SoloQuestSchema extends BaseQuestSchema {
+  prerequisites: string;
+  tags: string[];
+}
+
+export type SoloQuestShortSchema = Omit<SoloQuestSchema, 'sections'>;

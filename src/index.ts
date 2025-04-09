@@ -10,6 +10,7 @@ export {
 export { 
     BlockSchema, SectionSchema, QuestSchema, 
     QuestShortSchema, Category, 
+    SoloQuestSchema, SoloQuestShortSchema, BaseQuestSchema,
     JourneySchema, JourneyShortSchema, DevStatus,
 } from './schemas';
 
