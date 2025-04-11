@@ -151,10 +151,13 @@ print("Hello")
 });
 
 describe('parseQuestHeader', () => {
-  it('should parse quest name, id and desc correctly', () => {
+  it('should parse quest name and key-value pairs correctly', () => {
     const markdown = `# Quest: Test Quest
 id: test-id
-desc: This is a test quest.`;
+desc: This is a test quest.
+category: Foundational Mathematics
+
+## Another Heading`;
     
     const tokens = marked.lexer(markdown);
     const result = parseQuestHeader(tokens);
@@ -162,34 +165,36 @@ desc: This is a test quest.`;
     expect(result).toMatchObject({
       name: 'Test Quest',
       id: 'test-id',
-      desc: 'This is a test quest.'
+      desc: 'This is a test quest.',
+      category: 'Foundational Mathematics'
     });
   });
   
   it('should handle when desc is missing', () => {
     const markdown = `# Quest: Another Quest
-id: another-id`;
+id: another-id
+
+## Another Heading`;
     
     const tokens = marked.lexer(markdown);
     const result = parseQuestHeader(tokens);
     
     expect(result).toMatchObject({
       name: 'Another Quest',
-      id: 'another-id',
-      desc: ''
+      id: 'another-id'
     });
   });
   
   it('should handle when id and desc are missing', () => {
-    const markdown = `# Quest: Simple Quest`;
+    const markdown = `# Quest: Simple Quest
+
+## Another Heading`;
     
     const tokens = marked.lexer(markdown);
     const result = parseQuestHeader(tokens);
     
     expect(result).toMatchObject({
-      name: 'Simple Quest',
-      id: '',
-      desc: ''
+      name: 'Simple Quest'
     });
   });
 });

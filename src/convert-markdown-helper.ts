@@ -10,75 +10,50 @@ export interface MarkdownBlockRaw {
 /**
  * 从tokens中提取Quest头部信息（名称、ID和描述）
  * @param tokens 标记数组
- * @returns 包含name、id和desc的对象
+ * @returns The map of meta data
  */
-export function parseQuestHeader(tokens: Token[]): { name: string; id: string; desc: string } {
-    let name = '';
-    let id = '';
-    let desc = '';
-    let headerProcessed = false;  // 标记头部信息是否已处理完毕
-  
-    // 只处理开头的几个token，避免被后续的内容干扰
-    // 通常，头部信息在前2-3个token中
-    const headerTokens = tokens.slice(0, 3);  
-  
-    for (let i = 0; i < headerTokens.length; i++) {
-      const token = headerTokens[i];
-      
-      // Quest name from h1
-      if (token.type === 'heading' && token.depth === 1) {
-        const text = token.text;
-        if (text.startsWith('Quest:')) {
-          name = text.substring('Quest:'.length).trim();
-        }
-        continue;
-      }
-  
-      // Extract id and desc from paragraph
-      if (token.type === 'paragraph' && !headerProcessed) {
-        // 检查是否包含"id:"前缀
-        if (token.text.includes('id:')) {
-          // 直接提取id，确保我们能准确获取值
-          const match = token.text.match(/id:\s*([^\n]+)/);
-          if (match && match[1]) {
-            id = match[1].trim();
-          }
-        }
-        
-        // 检查是否包含"desc:"前缀
-        if (token.text.includes('desc:')) {
-          // 直接提取desc，确保我们能准确获取值
-          const match = token.text.match(/desc:\s*([^\n]+)/);
-          if (match && match[1]) {
-            desc = match[1].trim();
-          }
-        }
-        
-        // 保留原始方法作为备份
-        if (!id || !desc) {
-          const lines = token.text.split('\n');
-          lines.forEach((line: string) => {
-            if (line.includes(':')) {
-              const [key, value] = line.split(':').map((s: string) => s.trim());
-              if (key === 'id' && !id) {
-                id = value;
-              }
-              if (key === 'desc' && !desc) {
-                desc = value;
-              }
+export function parseQuestHeader(tokens: Token[]): Record<string, string> {
+    const result: Record<string, string> = {};
+    let nameExtracted = false;
+
+    for (const token of tokens) {
+        // Extract the name from the first heading of depth 1
+        if (!nameExtracted && token.type === 'heading' && token.depth === 1) {
+            const text = token.text.trim();
+            if (text.startsWith('Quest:')) {
+                result['name'] = text.substring('Quest:'.length).trim();
             }
-          });
+            nameExtracted = true;
+            continue;
         }
-        
-        // 如果已经找到了id和name，标记头部处理完成
-        if (name && id) {
-          headerProcessed = true;
+
+        // Stop processing key-value pairs when another heading is encountered
+        if (nameExtracted && token.type === 'heading') {
+            break;
         }
-      }
+
+        // Process paragraphs for key-value pairs
+        if (nameExtracted && token.type === 'paragraph') {
+            const lines = token.text.split('\n');
+            for (const line of lines) {
+                // Skip empty lines
+                if (!line.trim()) continue;
+
+                // Split on first ':' only
+                const colonIndex = line.indexOf(':');
+                if (colonIndex !== -1) {
+                    const key = line.substring(0, colonIndex).trim().toLowerCase();
+                    const value = line.substring(colonIndex + 1).trim();
+                    if (key && value) {
+                        result[key] = value;
+                    }
+                }
+            }
+        }
     }
-  
-    return { name, id, desc };
-  }
+
+    return result;
+}
   
   /**
    * 处理嵌套列表项

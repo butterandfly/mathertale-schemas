@@ -155,6 +155,42 @@ Custom content.
     expect(result.sections[0].blocks[0].name).toBe('My Block');
     expect(result.sections[0].blocks[0].questionData).toEqual({ customField: 'Custom value' });
   });
+
+  it('should convert markdown to quest schema with category', () => {
+    const markdown = `# Quest: Test Quest with Category
+id: test-id-category
+desc: This is a test quest with a category.
+category: Foundational Mathematics
+
+## Section: Introduction
+
+### para: Welcome
+id: para-welcome
+
+This is the welcome paragraph.
+
+#### Content
+Welcome to the quest!`;
+
+    const result = convertQuestMarkdown(markdown);
+    
+    // Check top-level properties
+    expect(result.name).toBe('Test Quest with Category');
+    expect(result.id).toBe('test-id-category');
+    expect(result.desc).toBe('This is a test quest with a category.');
+    expect(result.category).toBe('Foundational Mathematics');
+    expect(result.blockCount).toBe(1);
+    expect(result.dependentQuests).toEqual([]);
+    expect(result.childQuests).toEqual([]);
+    expect(result.updatedAt).toBeInstanceOf(Date);
+    
+    // Check sections
+    expect(result.sections.length).toBe(1);
+    expect(result.sections[0].name).toBe('Introduction');
+    expect(result.sections[0].blocks.length).toBe(1);
+    expect(result.sections[0].blocks[0].id).toBe('para-welcome');
+    expect(result.sections[0].blocks[0].type).toBe('PARA');
+  });
 }); 
 
 describe('convertAllBlocks', () => {

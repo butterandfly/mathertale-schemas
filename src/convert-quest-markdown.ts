@@ -1,4 +1,4 @@
-import { BlockSchema, QuestSchema, SectionSchema } from "./schemas";
+import { BlockSchema, QuestSchema, SectionSchema, Category } from "./schemas";
 import { convertParaMarkdown } from "./blocks/para-block";
 import { marked, Token } from 'marked';
 import { MarkdownBlockRaw, parseQuestHeader } from "./convert-markdown-helper";
@@ -36,6 +36,7 @@ interface MarkdownQuest {
   id: string;
   desc: string;
   sections: MarkdownSection[];
+  category?: string;
 }
 
 /**
@@ -56,9 +57,12 @@ function parseMarkdownQuest(markdown: string): MarkdownQuest {
 
   // 第一步：获取Quest标题信息
   const headerInfo = parseQuestHeader(tokens);
-  quest.name = headerInfo.name;
-  quest.id = headerInfo.id;  // 保存正确的Quest ID
-  quest.desc = headerInfo.desc;
+  quest.name = headerInfo['name'] || '';
+  quest.id = headerInfo['id'] || '';
+  quest.desc = headerInfo['desc'] || '';
+  if (headerInfo['category']) {
+    quest.category = headerInfo['category'];
+  }
 
   // 第二步：处理sections和blocks
   let blockTokens: Token[] = [];
@@ -168,6 +172,8 @@ export function convertQuestMarkdown(markdown: string): QuestSchema {
     id: parsedQuest.id,
     name: parsedQuest.name,
     desc: parsedQuest.desc,
+    // category: parsedQuest.category ? Category[parsedQuest.category as keyof typeof Category] : undefined,
+    category: parsedQuest.category as Category,
     blockCount: 0,
     sections: [],
     updatedAt: new Date(),
