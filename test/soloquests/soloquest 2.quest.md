@@ -1,6 +1,7 @@
 # Quest: Solo Quest 2
 id: soloquest-id-2
 desc: This is a test quest.
+category: Fundational Mathematics
 
 ## Section: Introduction
 

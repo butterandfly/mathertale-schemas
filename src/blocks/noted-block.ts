@@ -9,41 +9,51 @@ export const PropositionType = 'PROPOSITION' as const;
 export const RemarkType = 'REMARK' as const;
 export const LemmaType = 'LEMMA' as const;
 
-export type NotedData = Omit<BlockSchema, 'questionData'>;
+export class NotedBlock implements BlockSchema {
+    constructor(
+        public id: string,
+        public content: string,
+        public type: string,
+        public name: string = '',
+        public updatedAt: Date = new Date()
+    ) {}
 
-function convertNotedBlockNode(rawData: RawData, type: string): NotedData {
-  return {
-    id: rawData.id,
-    type: type,
-    name: rawData.name || '',
-    content: rawData.rawContent,
-    updatedAt: new Date()
-  }
+    getText(): string {
+        return this.content;
+    }
+
+    static fromNode(rawData: RawData, type: string): NotedBlock {
+        return new NotedBlock(
+            rawData.id,
+            rawData.rawContent,
+            type,
+            rawData.name || ''
+        );
+    }
+
+    static fromMarkdown(block: MarkdownBlockRaw, type: string): NotedBlock {
+        const { content, properties } = extractProperties(block.rawTokens);
+        return new NotedBlock(
+            block.id,
+            properties.content || content || '',
+            type,
+            block.name || ''
+        );
+    }
 }
 
-export const convertDefinitionBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, DefinitionType);
-export const convertFactBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, FactType);
-export const convertTheoremBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, TheoremType);
-export const convertPropositionBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, PropositionType);
-export const convertRemarkBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, RemarkType);
-export const convertLemmaBlockNode = (rawData: RawData) => convertNotedBlockNode(rawData, LemmaType);
+// 导出工厂函数以保持兼容性
+export const convertDefinitionBlockNode = (rawData: RawData) => NotedBlock.fromNode(rawData, DefinitionType);
+export const convertFactBlockNode = (rawData: RawData) => NotedBlock.fromNode(rawData, FactType);
+export const convertTheoremBlockNode = (rawData: RawData) => NotedBlock.fromNode(rawData, TheoremType);
+export const convertPropositionBlockNode = (rawData: RawData) => NotedBlock.fromNode(rawData, PropositionType);
+export const convertRemarkBlockNode = (rawData: RawData) => NotedBlock.fromNode(rawData, RemarkType);
+export const convertLemmaBlockNode = (rawData: RawData) => NotedBlock.fromNode(rawData, LemmaType);
 
-export function convertNotedMarkdown(block: MarkdownBlockRaw, type: string): NotedData {
-  // 直接传递rawTokens给extractProperties
-  const { content, properties } = extractProperties(block.rawTokens);
-  
-  return {
-    id: block.id,
-    content: properties.content || content || '',
-    type: type,
-    updatedAt: new Date()
-  };
-} 
-
-export const convertDefinitionMarkdown = (block: MarkdownBlockRaw) => convertNotedMarkdown(block, DefinitionType);
-export const convertFactMarkdown = (block: MarkdownBlockRaw) => convertNotedMarkdown(block, FactType);
-export const convertTheoremMarkdown = (block: MarkdownBlockRaw) => convertNotedMarkdown(block, TheoremType);
-export const convertPropositionMarkdown = (block: MarkdownBlockRaw) => convertNotedMarkdown(block, PropositionType);
-export const convertRemarkMarkdown = (block: MarkdownBlockRaw) => convertNotedMarkdown(block, RemarkType);
-export const convertLemmaMarkdown = (block: MarkdownBlockRaw) => convertNotedMarkdown(block, LemmaType);
+export const convertDefinitionMarkdown = (block: MarkdownBlockRaw) => NotedBlock.fromMarkdown(block, DefinitionType);
+export const convertFactMarkdown = (block: MarkdownBlockRaw) => NotedBlock.fromMarkdown(block, FactType);
+export const convertTheoremMarkdown = (block: MarkdownBlockRaw) => NotedBlock.fromMarkdown(block, TheoremType);
+export const convertPropositionMarkdown = (block: MarkdownBlockRaw) => NotedBlock.fromMarkdown(block, PropositionType);
+export const convertRemarkMarkdown = (block: MarkdownBlockRaw) => NotedBlock.fromMarkdown(block, RemarkType);
+export const convertLemmaMarkdown = (block: MarkdownBlockRaw) => NotedBlock.fromMarkdown(block, LemmaType);
 

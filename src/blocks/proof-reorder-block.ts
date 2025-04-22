@@ -1,8 +1,6 @@
-import { RawData } from "../convert-helper";
+import { RawData, convertRawContent } from "../convert-helper";
 import { BlockSchema } from "../schemas";
-import { convertRawContent } from "../convert-helper";
 import { extractProperties, MarkdownBlockRaw, checkRequiredProperties } from "../convert-markdown-helper";
-import { marked } from 'marked';
 
 export const ProofReorderType = 'PROOF_REORDER' as const;
 
@@ -18,108 +16,142 @@ export interface ProofReorderQuestionData {
   questionOrder: string;
 }
 
-export interface ProofReorderData extends BlockSchema {
+export class ProofReorderBlock implements BlockSchema {
   id: string;
   type: typeof ProofReorderType;
   content: string;
   questionData: ProofReorderQuestionData;
-}
+  name?: string;
+  updatedAt: Date;
 
-/**
- * Block node template:
- * 
- * {content}
- * 
- * part-1:
- * {part-1 content}
- * 
- * part-2:
- * {part-2 content}
- * 
- * part-3:
- * {part-3 content}
- * 
- * question-order:
- * 3,1,2
- * 
- */
-
-export function convertProofReorderBlockNode(rawData: RawData): ProofReorderData {
-  const keywords = [
-    { pattern: 'question-order:', name: 'questionOrder' },
-    { pattern: /part-\d+:/, name: 'parts' },
-  ]
-  const converted = convertRawContent(rawData.rawContent, keywords);
-  const questionOrder = converted.questionOrder as string;
-  const parts = converted.parts as string[];
-  const blockContent = converted.content as string;
-
-  const questionOrderArray = questionOrder.trim().split(',');
-  const cleanOrderArray = questionOrderArray.map(s => s.trim());
-  
-  return {
-    id: rawData.id,
-    type: ProofReorderType,
-    content: blockContent,
-    questionData: {
-      orderItems: parts.map((part, index) => ({
-        id: `${index + 1}`,
-        content: part,
-      })),
-      questionOrder: cleanOrderArray.join(','),
-    },
+  constructor(
+    id: string,
+    content: string,
+    questionData: ProofReorderQuestionData,
+    name?: string
+  ) {
+    this.id = id;
+    this.content = content;
+    this.questionData = questionData;
+    this.type = ProofReorderType;
+    this.name = name;
+    this.updatedAt = new Date();
   }
-}
 
-/**
- * Markdown format for proof reorder block
- * 
- * {content}
- * 
- * #### Part 1
- * {part-1 content}
- * 
- * #### Part 2
- * {part-2 content}
- * 
- * #### Part 3
- * {part-3 content}
- * 
- * #### Question Order
- * 3,1,2
- * 
- */
+  getText(): string {
+    const { orderItems, questionOrder } = this.questionData;
+    let text = this.content + '\n\n';
+    
+    orderItems.forEach((item, index) => {
+      text += `part-${index + 1}:\n${item.content}\n\n`;
+    });
+    
+    text += `question-order:\n${questionOrder}`;
+    return text;
+  }
 
-export function convertProofReorderMarkdown(markdown: MarkdownBlockRaw): ProofReorderData {
-  const { content, properties } = extractProperties(markdown.rawTokens);
+  /**
+   * Block node template:
+   * 
+   * {content}
+   * 
+   * part-1:
+   * {part-1 content}
+   * 
+   * part-2:
+   * {part-2 content}
+   * 
+   * part-3:
+   * {part-3 content}
+   * 
+   * question-order:
+   * 3,1,2
+   * 
+   */
+  static fromNode(rawData: RawData): ProofReorderBlock {
+    const keywords = [
+      { pattern: 'question-order:', name: 'questionOrder' },
+      { pattern: /part-\d+:/, name: 'parts' },
+    ];
+    const converted = convertRawContent(rawData.rawContent, keywords);
+    const questionOrder = converted.questionOrder as string;
+    const parts = Array.isArray(converted.parts) ? converted.parts : [converted.parts];
+    const blockContent = converted.content as string;
 
-  checkRequiredProperties(properties, ['question order']);
+    const questionOrderArray = questionOrder.trim().split(',');
+    const cleanOrderArray = questionOrderArray.map(s => s.trim());
+    
+    return new ProofReorderBlock(
+      rawData.id,
+      blockContent,
+      {
+        orderItems: parts.map((part, index) => ({
+          id: `${index + 1}`,
+          content: part,
+        })),
+        questionOrder: cleanOrderArray.join(','),
+      },
+      rawData.name
+    );
+  }
 
-  // Get all parts from properties
-  const parts: string[] = [];
-  for (const [key, value] of Object.entries(properties)) {
-    if (key.toLowerCase().startsWith('part ')) {
-      parts.push(value.trim());
+  /**
+   * Markdown format for proof reorder block
+   * 
+   * {content}
+   * 
+   * #### Part 1
+   * {part-1 content}
+   * 
+   * #### Part 2
+   * {part-2 content}
+   * 
+   * #### Part 3
+   * {part-3 content}
+   * 
+   * #### Question Order
+   * 3,1,2
+   * 
+   */
+  static fromMarkdown(markdown: MarkdownBlockRaw): ProofReorderBlock {
+    const { content, properties } = extractProperties(markdown.rawTokens);
+
+    checkRequiredProperties(properties, ['question order']);
+
+    // Get all parts from properties
+    const parts: string[] = [];
+    for (const [key, value] of Object.entries(properties)) {
+      if (key.toLowerCase().startsWith('part ')) {
+        parts.push(value.trim());
+      }
     }
+
+    if (parts.length === 0) {
+      throw new Error('parts are required');
+    }
+
+    const questionOrder = properties['question order'].trim();
+
+    return new ProofReorderBlock(
+      markdown.id,
+      content,
+      {
+        orderItems: parts.map((part, index) => ({
+          id: `${index + 1}`,
+          content: part,
+        })),
+        questionOrder,
+      },
+      markdown.name
+    );
   }
+}
 
-  if (parts.length === 0) {
-    throw new Error('parts are required');
-  }
+export function convertProofReorderBlockNode(rawData: RawData): ProofReorderBlock {
+  return ProofReorderBlock.fromNode(rawData);
+}
 
-  const questionOrder = properties['question order'].trim();
-
-  return {
-    id: markdown.id,
-    type: ProofReorderType,
-    content,
-    questionData: {
-      orderItems: parts.map((part, index) => ({
-        id: `${index + 1}`,
-        content: part,
-      })),
-      questionOrder,
-    },
-  };
+export function convertProofReorderMarkdown(markdown: MarkdownBlockRaw): ProofReorderBlock {
+  return ProofReorderBlock.fromMarkdown(markdown);
 }
 

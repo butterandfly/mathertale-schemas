@@ -5,6 +5,7 @@ export interface BlockSchema {
     name?: string;
     questionData?: any;
     updatedAt?: Date;
+    getText(): string;
 }
 
 export interface SectionSchema {
@@ -12,12 +13,15 @@ export interface SectionSchema {
     blocks: BlockSchema[];
 }
 
-export enum Category {
-    FOUNDATIONAL = 'Foundational Mathematics',
-    ANALYSIS = 'Analysis',
-    ALGEBRA = 'Algebra',
-    PROBABILITY = 'Probability and Statistics'
-}
+export const Category = {
+    FOUNDATIONAL: 'Foundational Mathematics',
+    ANALYSIS: 'Analysis',
+    ALGEBRA: 'Algebra',
+    PROBABILITY: 'Probability and Statistics'
+} as const;
+
+// 创建一个类型，包含所有可能的值
+export type Category = typeof Category[keyof typeof Category];
 
 export interface BaseQuestSchema {
   // 基础信息

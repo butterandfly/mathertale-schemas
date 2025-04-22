@@ -1,6 +1,7 @@
 # Quest: Quest Name
 id: test-id
 desc: This is a test quest.
+category: Fundational Mathematics
 
 ## Section: Introduction
 

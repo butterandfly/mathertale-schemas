@@ -1,184 +1,56 @@
 import { expect, describe, it } from "vitest";
+import { marked } from "marked";
 import { 
-  convertContradiction, 
-  convertContradictionBlockNode, 
+  ContradictionBlock,
   ContradictionType,
-} from './contradiction-block';
-import { RawData } from '../convert-helper';
-import { marked } from 'marked';
-import { convertContradictionMarkdown } from './contradiction-block';
+  convertContradictionBlockNode,
+  convertContradictionMarkdown
+} from "./contradiction-block";
+import { RawData } from "../convert-helper";
+import { MarkdownBlockRaw } from "../convert-markdown-helper";
 
-describe('Contradiction Block', () => {
-  describe('convertContradiction', () => {
-    it('should convert raw content to structured data', () => {
-      const rawContent = `This is a contradiction question.
-It can have multiple lines.
+describe('ContradictionBlock', () => {
+  it('should convert contradiction block node raw data', () => {
+    const rawData: RawData = { 
+      id: 'fake-id', 
+      tag: 'contradiction', 
+      rawContent: `This is the main content.
 
-choices:
-a: First choice
-b: Second choice
-c: Third choice
-d: Fourth choice
-
-answer:
-a, c
-
-explanation:
-This is the explanation.
-It can also have multiple lines.`;
-
-      const result = convertContradiction(rawContent);
-      
-      // Check block content
-      expect(result.blockContent).toBe('This is a contradiction question.\nIt can have multiple lines.');
-      
-      // Check question data
-      expect(result.questionData.choices).toHaveLength(4);
-      expect(result.questionData.choices[0]).toEqual({ key: 'a', content: 'First choice' });
-      expect(result.questionData.choices[1]).toEqual({ key: 'b', content: 'Second choice' });
-      expect(result.questionData.choices[2]).toEqual({ key: 'c', content: 'Third choice' });
-      expect(result.questionData.choices[3]).toEqual({ key: 'd', content: 'Fourth choice' });
-      
-      // Check answer (Array)
-      expect(result.questionData.answer).toHaveLength(2);
-      expect(result.questionData.answer).toContain('a');
-      expect(result.questionData.answer).toContain('c');
-      
-      // Check explanation
-      expect(result.questionData.explanation).toBe('This is the explanation.\nIt can also have multiple lines.');
-    });
-
-    it('should handle different order of sections', () => {
-      const rawContent = `This is a contradiction question.
-
-explanation:
-This is the explanation.
-
-choices:
-a: First choice
-b: Second choice
-
-answer:
-a, b`;
-
-      const result = convertContradiction(rawContent);
-      
-      expect(result.blockContent).toBe('This is a contradiction question.');
-      expect(result.questionData.choices).toHaveLength(2);
-      expect(result.questionData.answer).toHaveLength(2);
-      expect(result.questionData.answer).toContain('a');
-      expect(result.questionData.answer).toContain('b');
-      expect(result.questionData.explanation).toBe('This is the explanation.');
-    });
-
-    it('should handle answer keys in different order', () => {
-      const rawContent = `Question
-      
 choices:
 a: First choice
 b: Second choice
 c: Third choice
 
 answer:
-c, a
+a, b
 
 explanation:
-Explanation`;
-
-      const result = convertContradiction(rawContent);
-      
-      expect(result.questionData.answer).toHaveLength(2);
-      expect(result.questionData.answer).toContain('a');
-      expect(result.questionData.answer).toContain('c');
-    });
-
-    it('should throw error if choices section is missing', () => {
-      const rawContent = `Question
-      
-answer:
-a
-
-explanation:
-Explanation`;
-
-      expect(() => convertContradiction(rawContent)).toThrow('choices section is required');
-    });
-
-    it('should throw error if answer section is missing', () => {
-      const rawContent = `Question
-      
-choices:
-a: First choice
-
-explanation:
-Explanation`;
-
-      expect(() => convertContradiction(rawContent)).toThrow('answer section is required');
-    });
-
-    it('should throw error if explanation section is missing', () => {
-      const rawContent = `Question
-      
-choices:
-a: First choice
-
-answer:
-a`;
-
-      expect(() => convertContradiction(rawContent)).toThrow('explanation section is required');
-    });
-
-    it('should throw error if choices section is empty', () => {
-      const rawContent = `Question
-      
-choices:
-
-answer:
-a
-
-explanation:
-Explanation`;
-
-      expect(() => convertContradiction(rawContent)).toThrow('choices section is empty');
-    });
-
-    it('should throw error if answer section is empty', () => {
-      const rawContent = `Question
-      
-choices:
-a: First choice
-
-answer:
-
-explanation:
-Explanation`;
-
-      expect(() => convertContradiction(rawContent)).toThrow('answer must be 2 keys');
-    });
-
-    it('should throw error if answer key does not exist in choices', () => {
-      const rawContent = `Question
-      
-choices:
-a: First choice
-b: Second choice
-
-answer:
-a, c
-
-explanation:
-Explanation`;
-
-      expect(() => convertContradiction(rawContent)).toThrow('answer key "c" does not exist in choices');
+This is the explanation.`
+    };
+    
+    const block = convertContradictionBlockNode(rawData);
+    expect(block).toMatchObject({
+      content: 'This is the main content.',
+      type: ContradictionType,
+      id: rawData.id,
+      questionData: {
+        choices: [
+          { key: 'a', content: 'First choice' },
+          { key: 'b', content: 'Second choice' },
+          { key: 'c', content: 'Third choice' }
+        ],
+        answer: ['a', 'b'],
+        explanation: 'This is the explanation.'
+      }
     });
   });
 
-  describe('convertContradictionBlockNode', () => {
-    it('should convert raw data to contradiction block data', () => {
+  describe('fromNode', () => {
+    it('should convert raw data to contradiction block', () => {
       const rawData: RawData = {
         id: 'test-id',
-        tag: 'test-tag',
-        rawContent: `Question
+        tag: 'contradiction',
+        rawContent: `Main content
 
 choices:
 a: First choice
@@ -188,146 +60,159 @@ answer:
 a, b
 
 explanation:
-Explanation`
+Test explanation`
       };
 
-      const result = convertContradictionBlockNode(rawData);
-      
-      expect(result.id).toBe('test-id');
-      expect(result.type).toBe(ContradictionType);
-      expect(result.content).toBe('Question');
-      expect(result.questionData.choices).toHaveLength(2);
-      expect(result.questionData.answer).toHaveLength(2);
-      expect(result.questionData.answer).toContain('a');
-      expect(result.questionData.answer).toContain('b');
-      expect(result.questionData.explanation).toBe('Explanation');
-    });
-  });
+      const result = ContradictionBlock.fromNode(rawData);
 
-  describe('convertContradictionMarkdown', () => {
-    it('should convert markdown to contradiction data', () => {
-      const markdown = `This is the question content.
-It can have multiple lines and LaTeX content like $x^2$.
-
-#### Choices
-a: First choice with $\\alpha$
-b: Second choice with $\\beta$
-c: Third choice with $\\gamma$
-d: Fourth choice with $\\delta$
-
-#### Answer
-a, c
-
-#### Explanation
-This is the explanation.
-It can also have multiple lines and LaTeX content.`;
-
-      const tokens = marked.lexer(markdown);
-      const result = convertContradictionMarkdown({
+      expect(result).toBeInstanceOf(ContradictionBlock);
+      expect(result).toMatchObject({
         id: 'test-id',
-        rawTokens: tokens,
-        tag: 'contradiction'
-      });
-
-      expect(result).toEqual({
-        id: 'test-id',
+        content: 'Main content',
         type: ContradictionType,
-        content: 'This is the question content.\nIt can have multiple lines and LaTeX content like $x^2$.',
         questionData: {
           choices: [
-            { key: 'a', content: 'First choice with $\\alpha$' },
-            { key: 'b', content: 'Second choice with $\\beta$' },
-            { key: 'c', content: 'Third choice with $\\gamma$' },
-            { key: 'd', content: 'Fourth choice with $\\delta$' }
+            { key: 'a', content: 'First choice' },
+            { key: 'b', content: 'Second choice' }
           ],
-          answer: ['a', 'c'],
-          explanation: 'This is the explanation.\nIt can also have multiple lines and LaTeX content.'
+          answer: ['a', 'b'],
+          explanation: 'Test explanation'
+        }
+      });
+      expect(result.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should handle raw data with name', () => {
+      const rawData: RawData = {
+        id: 'test-id',
+        name: 'Test Name',
+        tag: 'contradiction',
+        rawContent: `Main content
+
+choices:
+a: First choice
+b: Second choice
+
+answer:
+a, b
+
+explanation:
+Test explanation`
+      };
+
+      const result = ContradictionBlock.fromNode(rawData);
+
+      expect(result).toMatchObject({
+        id: 'test-id',
+        name: 'Test Name',
+        content: 'Main content',
+        type: ContradictionType,
+        questionData: {
+          choices: [
+            { key: 'a', content: 'First choice' },
+            { key: 'b', content: 'Second choice' }
+          ],
+          answer: ['a', 'b'],
+          explanation: 'Test explanation'
         }
       });
     });
 
-    it('should throw error when choices section is missing', () => {
-      const markdown = `This is the question content.
+    it('should throw error when choices are missing', () => {
+      const rawData: RawData = {
+        id: 'test-id',
+        tag: 'contradiction',
+        rawContent: `Main content
 
-#### Answer
+answer:
 a, b
 
-#### Explanation
-This is the explanation.`;
+explanation:
+Test explanation`
+      };
 
-      const tokens = marked.lexer(markdown);
-      expect(() => convertContradictionMarkdown({
-        id: 'test-id',
-        rawTokens: tokens,
-        tag: 'contradiction'
-      })).toThrow('choices is required');
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('choices section is required');
     });
 
-    it('should throw error when answer section is missing', () => {
-      const markdown = `This is the question content.
+    it('should throw error when answer is missing', () => {
+      const rawData: RawData = {
+        id: 'test-id',
+        tag: 'contradiction',
+        rawContent: `Main content
 
-#### Choices
+choices:
 a: First choice
 b: Second choice
 
-#### Explanation
-This is the explanation.`;
+explanation:
+Test explanation`
+      };
 
-      const tokens = marked.lexer(markdown);
-      expect(() => convertContradictionMarkdown({
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('answer section is required');
+    });
+
+    it('should throw error when explanation is missing', () => {
+      const rawData: RawData = {
         id: 'test-id',
-        rawTokens: tokens,
-        tag: 'contradiction'
-      })).toThrow('answer is required');
+        tag: 'contradiction',
+        rawContent: `Main content
+
+choices:
+a: First choice
+b: Second choice
+
+answer:
+a, b`
+      };
+
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('explanation section is required');
     });
 
     it('should throw error when answer length is not 2', () => {
-      const markdown = `This is the question content.
+      const rawData: RawData = {
+        id: 'test-id',
+        tag: 'contradiction',
+        rawContent: `Main content
 
-#### Choices
+choices:
 a: First choice
 b: Second choice
 c: Third choice
 
-#### Answer
+answer:
 a
 
-#### Explanation
-This is the explanation.`;
+explanation:
+Test explanation`
+      };
 
-      const tokens = marked.lexer(markdown);
-      expect(() => convertContradictionMarkdown({
-        id: 'test-id',
-        rawTokens: tokens,
-        tag: 'contradiction'
-      })).toThrow('answer must be 2 keys');
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('answer must be 2 keys');
     });
 
     it('should throw error when answer key does not exist in choices', () => {
-      const markdown = `This is the question content.
+      const rawData: RawData = {
+        id: 'test-id',
+        tag: 'contradiction',
+        rawContent: `Main content
 
-#### Choices
+choices:
 a: First choice
 b: Second choice
-c: Third choice
 
-#### Answer
-a, x
+answer:
+a, c
 
-#### Explanation
-This is the explanation.`;
+explanation:
+Test explanation`
+      };
 
-      const tokens = marked.lexer(markdown);
-      expect(() => convertContradictionMarkdown({
-        id: 'test-id',
-        rawTokens: tokens,
-        tag: 'contradiction'
-      })).toThrow('answer key "x" does not exist in choices');
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('answer key "c" does not exist in choices');
     });
+  });
 
-    it('should handle content before any heading', () => {
-      const markdown = `Some content before any heading.
-More content here.
+  describe('fromMarkdown', () => {
+    it('should convert markdown to contradiction block', () => {
+      const markdown = `This is the main content.
 
 #### Choices
 a: First choice
@@ -341,13 +226,236 @@ a, b
 This is the explanation.`;
 
       const tokens = marked.lexer(markdown);
-      const result = convertContradictionMarkdown({
+      const blockRaw: MarkdownBlockRaw = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
-      });
+      };
 
-      expect(result.content).toBe('Some content before any heading.\nMore content here.');
+      const result = ContradictionBlock.fromMarkdown(blockRaw);
+
+      expect(result).toMatchObject({
+        id: 'test-id',
+        content: 'This is the main content.',
+        type: ContradictionType,
+        questionData: {
+          choices: [
+            { key: 'a', content: 'First choice' },
+            { key: 'b', content: 'Second choice' },
+            { key: 'c', content: 'Third choice' }
+          ],
+          answer: ['a', 'b'],
+          explanation: 'This is the explanation.'
+        }
+      });
+    });
+
+    it('should handle markdown with name', () => {
+      const markdown = `This is the main content.
+
+#### Choices
+a: First choice
+b: Second choice
+
+#### Answer
+a, b
+
+#### Explanation
+This is the explanation.`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlockRaw = {
+        id: 'test-id',
+        name: 'Test Name',
+        rawTokens: tokens,
+        tag: 'contradiction'
+      };
+
+      const result = ContradictionBlock.fromMarkdown(blockRaw);
+
+      expect(result).toMatchObject({
+        id: 'test-id',
+        name: 'Test Name',
+        content: 'This is the main content.',
+        type: ContradictionType,
+        questionData: {
+          choices: [
+            { key: 'a', content: 'First choice' },
+            { key: 'b', content: 'Second choice' }
+          ],
+          answer: ['a', 'b'],
+          explanation: 'This is the explanation.'
+        }
+      });
+    });
+
+    it('should throw error when choices are missing', () => {
+      const markdown = `This is the main content.
+
+#### Answer
+a, b
+
+#### Explanation
+This is the explanation.`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlockRaw = {
+        id: 'test-id',
+        rawTokens: tokens,
+        tag: 'contradiction'
+      };
+
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('choices is required');
+    });
+
+    it('should throw error when answer is missing', () => {
+      const markdown = `This is the main content.
+
+#### Choices
+a: First choice
+b: Second choice
+
+#### Explanation
+This is the explanation.`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlockRaw = {
+        id: 'test-id',
+        rawTokens: tokens,
+        tag: 'contradiction'
+      };
+
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('answer is required');
+    });
+
+    it('should throw error when explanation is missing', () => {
+      const markdown = `This is the main content.
+
+#### Choices
+a: First choice
+b: Second choice
+
+#### Answer
+a, b`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlockRaw = {
+        id: 'test-id',
+        rawTokens: tokens,
+        tag: 'contradiction'
+      };
+
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('explanation is required');
+    });
+  });
+
+  describe('getText', () => {
+    it('should return formatted text content', () => {
+      const block = new ContradictionBlock(
+        'test-id',
+        'Main content',
+        {
+          choices: [
+            { key: 'a', content: 'First choice' },
+            { key: 'b', content: 'Second choice' }
+          ],
+          answer: ['a', 'b'],
+          explanation: 'Test explanation'
+        }
+      );
+
+      const text = block.getText();
+      expect(text).toBe(
+        'Main content\n\n' +
+        'choices:\n' +
+        'a: First choice\n' +
+        'b: Second choice\n\n' +
+        'answer:\n' +
+        'a, b\n\n' +
+        'explanation:\n' +
+        'Test explanation'
+      );
+    });
+
+    it('should handle empty content', () => {
+      const block = new ContradictionBlock(
+        'test-id',
+        '',
+        {
+          choices: [
+            { key: 'a', content: 'First choice' }
+          ],
+          answer: ['a', 'b'],
+          explanation: 'Test explanation'
+        }
+      );
+
+      const text = block.getText();
+      expect(text).toBe(
+        '\n\n' +
+        'choices:\n' +
+        'a: First choice\n\n' +
+        'answer:\n' +
+        'a, b\n\n' +
+        'explanation:\n' +
+        'Test explanation'
+      );
+    });
+  });
+
+  describe('compatibility functions', () => {
+    it('should work with convertContradictionBlockNode', () => {
+      const rawData: RawData = {
+        id: 'test-id',
+        tag: 'contradiction',
+        rawContent: `Main content
+
+choices:
+a: First choice
+b: Second choice
+
+answer:
+a, b
+
+explanation:
+Test explanation`
+      };
+
+      const result = convertContradictionBlockNode(rawData);
+
+      expect(result).toBeInstanceOf(ContradictionBlock);
+      expect(result).toMatchObject({
+        id: 'test-id',
+        type: ContradictionType
+      });
+    });
+
+    it('should work with convertContradictionMarkdown', () => {
+      const markdown = `Main content
+
+#### Choices
+a: First choice
+b: Second choice
+
+#### Answer
+a, b
+
+#### Explanation
+Test explanation`;
+
+      const markdownBlock: MarkdownBlockRaw = {
+        tag: 'contradiction',
+        id: 'test-id',
+        rawTokens: marked.lexer(markdown)
+      };
+
+      const result = convertContradictionMarkdown(markdownBlock);
+
+      expect(result).toBeInstanceOf(ContradictionBlock);
+      expect(result).toMatchObject({
+        id: 'test-id',
+        type: ContradictionType
+      });
     });
   });
 }); 

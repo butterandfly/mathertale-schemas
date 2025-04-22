@@ -2,26 +2,40 @@ import { RawData } from '../convert-helper';
 import { BlockSchema } from '../schemas';
 import { extractProperties, MarkdownBlockRaw } from '../convert-markdown-helper';
 
-export type ParaData = Omit<BlockSchema, 'name' | 'questionData'>;
 export const ParaType = 'PARA' as const;
 
-export function convertParaBlockNode(rawData: RawData): ParaData {
-  return {
-    id: rawData.id,
-    content: rawData.rawContent,
-    type: ParaType,
-    updatedAt: new Date()
-  };
+export class ParaBlock implements BlockSchema {
+    readonly type = ParaType;
+
+    constructor(
+        public id: string,
+        public content: string,
+        public updatedAt: Date = new Date()
+    ) {}
+
+    getText(): string {
+        return this.content;
+    }
+
+    // 从 RawData 创建实例
+    static fromNode(rawData: RawData): BlockSchema {
+        return new ParaBlock(
+            rawData.id,
+            rawData.rawContent
+        );
+    }
+
+    // 从 Markdown 创建实例
+    static fromMarkdown(block: MarkdownBlockRaw): BlockSchema {
+        const { content, properties } = extractProperties(block.rawTokens);
+        
+        return new ParaBlock(
+            block.id,
+            properties.content || content || ''
+        );
+    }
 }
 
-export function convertParaMarkdown(block: MarkdownBlockRaw): ParaData {
-  // 直接传递rawTokens给extractProperties
-  const { content, properties } = extractProperties(block.rawTokens);
-  
-  return {
-    id: block.id,
-    content: properties.content || content || '',
-    type: ParaType,
-    updatedAt: new Date()
-  };
-} 
+// 保持原有的导出函数以保持兼容性
+export const convertParaBlockNode = ParaBlock.fromNode;
+export const convertParaMarkdown = ParaBlock.fromMarkdown; 

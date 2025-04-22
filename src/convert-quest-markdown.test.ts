@@ -129,7 +129,8 @@ This is the only content.
         content: 'Custom content',
         questionData: {
           customField: 'Custom value'
-        }
+        },
+        getText: () => 'Custom content'
       };
     });
     

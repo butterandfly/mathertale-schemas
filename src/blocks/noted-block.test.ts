@@ -1,98 +1,102 @@
 import { describe, it, expect } from 'vitest';
 import { marked } from 'marked';
 import { 
-  convertNotedMarkdown, 
-  DefinitionType, 
-  FactType, 
-  TheoremType, 
-  PropositionType, 
-  RemarkType, 
-  LemmaType,
-  NotedData
+    NotedBlock,
+    DefinitionType, 
+    FactType, 
+    TheoremType, 
+    PropositionType, 
+    RemarkType, 
+    LemmaType,
+    convertDefinitionBlockNode,
+    convertDefinitionMarkdown
 } from './noted-block';
+import { RawData } from '../convert-helper';
 import { MarkdownBlockRaw } from '../convert-markdown-helper';
 
-describe('convertNotedMarkdown', () => {
-  it('should convert a simple noted block', () => {
-    const block: MarkdownBlockRaw = {
-      tag: 'definition',
-      id: 'test-id',
-      rawTokens: marked.lexer('This is a simple definition.')
-    };
+describe('NotedBlock', () => {
+    describe('fromNode', () => {
+        it('should convert raw data to noted block', () => {
+            const rawData: RawData = {
+                id: 'test-id',
+                tag: 'definition',
+                rawContent: 'Test content'
+            };
 
-    const result = convertNotedMarkdown(block, DefinitionType);
+            const result = NotedBlock.fromNode(rawData, DefinitionType);
 
-    expect(result).toMatchObject({
-      id: 'test-id',
-      type: DefinitionType,
-      content: 'This is a simple definition.',
+            expect(result).toBeInstanceOf(NotedBlock);
+            expect(result).toMatchObject({
+                id: 'test-id',
+                content: 'Test content',
+                type: DefinitionType
+            });
+            expect(result.updatedAt).toBeInstanceOf(Date);
+        });
+
+        it('should handle raw data with name', () => {
+            const rawData: RawData = {
+                id: 'test-id',
+                tag: 'definition',
+                name: 'Test Name',
+                rawContent: 'Test content'
+            };
+
+            const result = NotedBlock.fromNode(rawData, DefinitionType);
+
+            expect(result).toMatchObject({
+                id: 'test-id',
+                content: 'Test content',
+                type: DefinitionType,
+                name: 'Test Name'
+            });
+        });
     });
-    expect(result.updatedAt).toBeInstanceOf(Date);
-  });
 
-  it('should handle block with properties', () => {
-    const markdown = `Some initial content.
+    describe('fromMarkdown', () => {
+        it('should convert markdown block to noted block', () => {
+            const markdownContent = 'Test content';
+            const tokens = marked.lexer(markdownContent);
+            
+            const markdownBlock: MarkdownBlockRaw = {
+                tag: 'definition',
+                id: 'test-id',
+                rawTokens: tokens
+            };
 
-#### Content
-This is the main content.
+            const result = NotedBlock.fromMarkdown(markdownBlock, DefinitionType);
 
-#### Note
-Additional note.`;
+            expect(result).toBeInstanceOf(NotedBlock);
+            expect(result).toMatchObject({
+                id: 'test-id',
+                content: 'Test content',
+                type: DefinitionType
+            });
+        });
 
-    const block: MarkdownBlockRaw = {
-      tag: 'theorem',
-      id: 'theorem-id',
-      rawTokens: marked.lexer(markdown)
-    };
+        it('should handle markdown block with name', () => {
+            const markdownContent = '#### content\nTest content';
+            const tokens = marked.lexer(markdownContent);
+            
+            const markdownBlock: MarkdownBlockRaw = {
+                tag: 'definition',
+                name: 'Test Name',
+                id: 'test-id',
+                rawTokens: tokens
+            };
 
-    const result = convertNotedMarkdown(block, TheoremType);
+            const result = NotedBlock.fromMarkdown(markdownBlock, DefinitionType);
 
-    expect(result).toMatchObject({
-      id: 'theorem-id',
-      type: TheoremType,
-      content: 'This is the main content.',
-    });
-    expect(result.updatedAt).toBeInstanceOf(Date);
-  });
+            expect(result).toMatchObject({
+                id: 'test-id',
+                content: 'Test content',
+                type: DefinitionType,
+                name: 'Test Name'
+            });
+        });
 
-  it('should use initial content when no Content property exists', () => {
-    const markdown = `This is the main content without properties.
-
-This should be included too.`;
-
-    const block: MarkdownBlockRaw = {
-      tag: 'fact',
-      id: 'fact-id',
-      rawTokens: marked.lexer(markdown)
-    };
-
-    const result = convertNotedMarkdown(block, FactType);
-
-    expect(result).toMatchObject({
-      id: 'fact-id',
-      type: FactType,
-      content: 'This is the main content without properties.\n\nThis should be included too.',
-    });
-  });
-
-  it('should handle empty content', () => {
-    const block: MarkdownBlockRaw = {
-      tag: 'remark',
-      id: 'remark-id',
-      rawTokens: marked.lexer('')
-    };
-
-    const result = convertNotedMarkdown(block, RemarkType);
-
-    expect(result).toMatchObject({
-      id: 'remark-id',
-      type: RemarkType,
-      content: '',
-    });
-  });
-
-  it('should handle complex markdown content', () => {
-    const markdown = `#### Content
+        it('should handle complex markdown content', () => {
+            const markdown = `#### Content
 Here's a complex content with:
 
 1. Ordered list
@@ -105,34 +109,62 @@ console.log('Code block');
 
 And some math: $$E = mc^2$$`;
 
-    const block: MarkdownBlockRaw = {
-      tag: 'lemma',
-      id: 'lemma-id',
-      rawTokens: marked.lexer(markdown)
-    };
+            const block: MarkdownBlockRaw = {
+                tag: 'lemma',
+                id: 'lemma-id',
+                rawTokens: marked.lexer(markdown)
+            };
 
-    const result = convertNotedMarkdown(block, LemmaType);
+            const result = NotedBlock.fromMarkdown(block, LemmaType);
 
-    expect(result).toMatchObject({
-      id: 'lemma-id',
-      type: LemmaType,
-      content: markdown.replace('#### Content\n', ''),
+            expect(result).toMatchObject({
+                id: 'lemma-id',
+                type: LemmaType,
+                content: markdown.replace('#### Content\n', ''),
+            });
+        });
     });
-  });
 
-  it('should handle proposition type', () => {
-    const block: MarkdownBlockRaw = {
-      tag: 'proposition',
-      id: 'prop-id',
-      rawTokens: marked.lexer('A mathematical proposition.')
-    };
-
-    const result = convertNotedMarkdown(block, PropositionType);
-
-    expect(result).toMatchObject({
-      id: 'prop-id',
-      type: PropositionType,
-      content: 'A mathematical proposition.',
+    describe('getText', () => {
+        it('should return the content', () => {
+            const block = new NotedBlock('test-id', 'Test content', DefinitionType, 'Test Name');
+            expect(block.getText()).toBe('Test content');
+        });
     });
-  });
+
+    describe('compatibility functions', () => {
+        it('should work with convertDefinitionBlockNode', () => {
+            const rawData: RawData = {
+                id: 'test-id',
+                tag: 'definition',
+                rawContent: 'Test content'
+            };
+
+            const result = convertDefinitionBlockNode(rawData);
+
+            expect(result).toBeInstanceOf(NotedBlock);
+            expect(result).toMatchObject({
+                id: 'test-id',
+                content: 'Test content',
+                type: DefinitionType
+            });
+        });
+
+        it('should work with convertDefinitionMarkdown', () => {
+            const markdownBlock: MarkdownBlockRaw = {
+                tag: 'definition',
+                id: 'test-id',
+                rawTokens: marked.lexer('Test content')
+            };
+
+            const result = convertDefinitionMarkdown(markdownBlock);
+
+            expect(result).toBeInstanceOf(NotedBlock);
+            expect(result).toMatchObject({
+                id: 'test-id',
+                content: 'Test content',
+                type: DefinitionType
+            });
+        });
+    });
 }); 

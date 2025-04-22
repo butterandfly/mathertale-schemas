@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { convertParaBlockNode, convertParaMarkdown, ParaType } from './para-block';
+import { ParaBlock, ParaType } from './para-block';
 import { RawData } from '../convert-helper';
 import { marked } from 'marked';
 import { MarkdownBlockRaw } from '../convert-markdown-helper';
 
-describe('para-block', () => {
-  describe('convertParaBlockNode', () => {
+describe('ParaBlock', () => {
+  describe('fromNode', () => {
     it('should convert raw data to para block', () => {
       const rawData: RawData = {
         id: 'test-id',
@@ -13,7 +13,7 @@ describe('para-block', () => {
         rawContent: 'Test content'
       };
 
-      const result = convertParaBlockNode(rawData);
+      const result = ParaBlock.fromNode(rawData);
 
       expect(result).toMatchObject({
         id: 'test-id',
@@ -31,7 +31,7 @@ describe('para-block', () => {
         rawContent: 'Test content'
       };
 
-      const result = convertParaBlockNode(rawData);
+      const result = ParaBlock.fromNode(rawData);
 
       expect(result).toMatchObject({
         id: 'test-id',
@@ -41,7 +41,7 @@ describe('para-block', () => {
     });
   });
 
-  describe('convertParaMarkdown', () => {
+  describe('fromMarkdown', () => {
     it('should convert markdown block to para block', () => {
       const markdownContent = 'Test content';
       const tokens = marked.lexer(markdownContent);
@@ -52,7 +52,7 @@ describe('para-block', () => {
         rawTokens: tokens
       };
 
-      const result = convertParaMarkdown(markdownBlock);
+      const result = ParaBlock.fromMarkdown(markdownBlock);
 
       expect(result).toMatchObject({
         id: 'test-id',
@@ -69,7 +69,7 @@ describe('para-block', () => {
         rawTokens: []
       };
 
-      const result = convertParaMarkdown(markdownBlock);
+      const result = ParaBlock.fromMarkdown(markdownBlock);
 
       expect(result).toMatchObject({
         id: 'test-id',
@@ -89,13 +89,20 @@ describe('para-block', () => {
         rawTokens: tokens
       };
 
-      const result = convertParaMarkdown(markdownBlock);
+      const result = ParaBlock.fromMarkdown(markdownBlock);
 
       expect(result).toMatchObject({
         id: 'test-id',
         content: 'Test content',
         type: ParaType
       });
+    });
+  });
+
+  describe('getText', () => {
+    it('should return the content', () => {
+      const block = new ParaBlock('test-id', 'Test content');
+      expect(block.getText()).toBe('Test content');
     });
   });
 }); 
