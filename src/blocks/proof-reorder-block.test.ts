@@ -7,7 +7,7 @@ import {
   convertProofReorderMarkdown
 } from "./proof-reorder-block";
 import { RawData } from "../convert-helper";
-import { MarkdownBlockRaw } from "../convert-markdown-helper";
+import { MarkdownBlock } from "../convert-markdown-helper";
 
 describe('ProofReorderBlock', () => {
   it('should convert proof reorder block node raw data', () => {
@@ -128,7 +128,7 @@ Third part content
 3,1,2`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'proof-reorder'
@@ -161,7 +161,7 @@ First part content
 1`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         name: 'Test Name',
         rawTokens: tokens,
@@ -191,7 +191,7 @@ First part content
 1`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'proof-reorder'
@@ -207,7 +207,7 @@ First part content
 First part content`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'proof-reorder'
@@ -293,7 +293,7 @@ First part
 #### Question Order
 1`;
 
-      const markdownBlock: MarkdownBlockRaw = {
+      const markdownBlock: MarkdownBlock = {
         tag: 'proof-reorder',
         id: 'test-id',
         rawTokens: marked.lexer(markdown)

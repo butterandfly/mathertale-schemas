@@ -1,6 +1,6 @@
 import { RawData, convertRawContent } from "../convert-helper";
 import { BlockSchema } from "../schemas";
-import { extractProperties, MarkdownBlockRaw, checkRequiredProperties } from "../convert-markdown-helper";
+import { extractProperties, MarkdownBlock, checkRequiredProperties } from "../convert-markdown-helper";
 
 export const ProofReorderType = 'PROOF_REORDER' as const;
 
@@ -113,7 +113,7 @@ export class ProofReorderBlock implements BlockSchema {
    * 3,1,2
    * 
    */
-  static fromMarkdown(markdown: MarkdownBlockRaw): ProofReorderBlock {
+  static fromMarkdown(markdown: MarkdownBlock): ProofReorderBlock {
     const { content, properties } = extractProperties(markdown.rawTokens);
 
     checkRequiredProperties(properties, ['question order']);
@@ -151,7 +151,7 @@ export function convertProofReorderBlockNode(rawData: RawData): ProofReorderBloc
   return ProofReorderBlock.fromNode(rawData);
 }
 
-export function convertProofReorderMarkdown(markdown: MarkdownBlockRaw): ProofReorderBlock {
+export function convertProofReorderMarkdown(markdown: MarkdownBlock): ProofReorderBlock {
   return ProofReorderBlock.fromMarkdown(markdown);
 }
 

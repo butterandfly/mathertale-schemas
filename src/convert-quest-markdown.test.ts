@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { marked } from 'marked';
-import { MarkdownBlockRaw } from './convert-markdown-helper';
+import { MarkdownBlock } from './convert-markdown-helper';
 import { BlockSchema, QuestSchema } from './schemas';
 import { convertQuestMarkdown, registerBlockConverter } from './convert-quest-markdown';
 
@@ -121,7 +121,7 @@ This is the only content.
   
   it('should use custom block converter when registered', () => {
     // 注册一个自定义的转换函数
-    registerBlockConverter('custom', (block: MarkdownBlockRaw): BlockSchema => {
+    registerBlockConverter('custom', (block: MarkdownBlock): BlockSchema => {
       return {
         id: block.id || 'default-id',
         type: 'custom',
@@ -363,4 +363,36 @@ This is the explanation.
   });
 
 });
+
+// describe('parseMarkdownQuest', () => {
+//   it('should correctly preserve raw markdown in MarkdownBlock', () => {
+//     const markdown = `# Quest: Simple Test
+// id: simple-test
+// desc: A simple test.
+
+// ## Section: First Section
+
+// ### para: Simple Para
+// id: para-1
+
+// This is a simple paragraph.
+
+// #### Content
+// This is the content.`;
+
+//     const result = parseMarkdownQuest(markdown);
+    
+//     expect(result.sections.length).toBe(1);
+//     expect(result.sections[0].blocks.length).toBe(1);
+    
+//     const block = result.sections[0].blocks[0];
+//     const expectedBlockMarkdown = `
+// This is a simple paragraph.
+
+// #### Content
+// This is the content.`;
+    
+//     expect(block.rawMarkdown.trim()).toBe(expectedBlockMarkdown);
+//   });
+// });
 

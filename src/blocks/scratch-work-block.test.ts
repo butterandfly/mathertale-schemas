@@ -7,7 +7,7 @@ import {
   convertScratchWorkMarkdown
 } from "./scratch-work-block";
 import { RawData } from "../convert-helper";
-import { MarkdownBlockRaw } from "../convert-markdown-helper";
+import { MarkdownBlock } from "../convert-markdown-helper";
 
 describe('ScratchWorkBlock', () => {
   it('should convert scratch work block node raw data', () => {
@@ -67,7 +67,7 @@ describe('ScratchWorkBlock', () => {
       const markdown = 'This is scratch work content';
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'scratch-work'
@@ -86,7 +86,7 @@ describe('ScratchWorkBlock', () => {
       const markdown = 'This is scratch work content';
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         name: 'Test Name',
         rawTokens: tokens,
@@ -144,7 +144,7 @@ describe('ScratchWorkBlock', () => {
 
     it('should work with convertScratchWorkMarkdown', () => {
       const markdown = 'Test content';
-      const markdownBlock: MarkdownBlockRaw = {
+      const markdownBlock: MarkdownBlock = {
         tag: 'scratch-work',
         id: 'test-id',
         rawTokens: marked.lexer(markdown)

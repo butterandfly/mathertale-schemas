@@ -7,7 +7,7 @@ import {
   convertContradictionMarkdown
 } from "./contradiction-block";
 import { RawData } from "../convert-helper";
-import { MarkdownBlockRaw } from "../convert-markdown-helper";
+import { MarkdownBlock } from "../convert-markdown-helper";
 
 describe('ContradictionBlock', () => {
   it('should convert contradiction block node raw data', () => {
@@ -226,7 +226,7 @@ a, b
 This is the explanation.`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
@@ -264,7 +264,7 @@ a, b
 This is the explanation.`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         name: 'Test Name',
         rawTokens: tokens,
@@ -299,7 +299,7 @@ a, b
 This is the explanation.`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
@@ -319,7 +319,7 @@ b: Second choice
 This is the explanation.`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
@@ -339,7 +339,7 @@ b: Second choice
 a, b`;
 
       const tokens = marked.lexer(markdown);
-      const blockRaw: MarkdownBlockRaw = {
+      const blockRaw: MarkdownBlock = {
         id: 'test-id',
         rawTokens: tokens,
         tag: 'contradiction'
@@ -443,7 +443,7 @@ a, b
 #### Explanation
 Test explanation`;
 
-      const markdownBlock: MarkdownBlockRaw = {
+      const markdownBlock: MarkdownBlock = {
         tag: 'contradiction',
         id: 'test-id',
         rawTokens: marked.lexer(markdown)

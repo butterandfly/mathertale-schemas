@@ -1,7 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
-import { extractProperties, MarkdownBlockRaw, checkRequiredProperties } from '../convert-markdown-helper';
+import { extractProperties, MarkdownBlock, checkRequiredProperties } from '../convert-markdown-helper';
 
 export const SingleChoiceType = 'SINGLE_CHOICE' as const;
 
@@ -160,7 +160,7 @@ ${this.questionData.explanation}`;
    * It can also have multiple lines and LaTeX content.
    * ```
   */
-  static fromMarkdown(block: MarkdownBlockRaw): SingleChoiceBlock {
+  static fromMarkdown(block: MarkdownBlock): SingleChoiceBlock {
     const { content, properties } = extractProperties(block.rawTokens);
 
     checkRequiredProperties(properties, ['choices', 'answer']);

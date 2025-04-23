@@ -1,5 +1,5 @@
 import { RawData } from '../convert-helper';
-import { extractProperties, MarkdownBlockRaw } from '../convert-markdown-helper';
+import { extractProperties, MarkdownBlock } from '../convert-markdown-helper';
 import { BlockSchema } from '../schemas';
 
 export const ScratchWorkType = 'SCRATCH_WORK' as const;
@@ -28,7 +28,7 @@ export class ScratchWorkBlock implements BlockSchema {
     );
   }
 
-  static fromMarkdown(markdown: MarkdownBlockRaw): ScratchWorkBlock {
+  static fromMarkdown(markdown: MarkdownBlock): ScratchWorkBlock {
     const { content } = extractProperties(markdown.rawTokens);
     return new ScratchWorkBlock(
       markdown.id,
@@ -47,6 +47,6 @@ export function convertScratchWorkBlockNode(rawData: RawData): ScratchWorkBlock 
  * {content}
  * 
  */
-export function convertScratchWorkMarkdown(markdown: MarkdownBlockRaw): ScratchWorkBlock {
+export function convertScratchWorkMarkdown(markdown: MarkdownBlock): ScratchWorkBlock {
   return ScratchWorkBlock.fromMarkdown(markdown);
 }

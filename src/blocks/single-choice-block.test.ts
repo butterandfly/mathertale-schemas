@@ -7,7 +7,7 @@ import {
   convertSingleChoiceMarkdown
 } from "./single-choice-block";
 import { RawData } from "../convert-helper";
-import { MarkdownBlockRaw } from "../convert-markdown-helper";
+import { MarkdownBlock } from "../convert-markdown-helper";
 
 describe('SingleChoiceBlock', () => {
     it('should convert single choice block node raw data', () => {
@@ -247,7 +247,7 @@ b
 Basic arithmetic`;
 
             const tokens = marked.lexer(markdown);
-            const blockRaw: MarkdownBlockRaw = {
+            const blockRaw: MarkdownBlock = {
                 id: 'test-id',
                 rawTokens: tokens,
                 tag: 'single-choice'
@@ -286,7 +286,7 @@ b
 Basic arithmetic`;
 
             const tokens = marked.lexer(markdown);
-            const blockRaw: MarkdownBlockRaw = {
+            const blockRaw: MarkdownBlock = {
                 id: 'test-id',
                 name: 'Test Question',
                 rawTokens: tokens,
@@ -380,7 +380,7 @@ Basic arithmetic`
         });
 
         it('should work with convertSingleChoiceMarkdown', () => {
-            const markdownBlock: MarkdownBlockRaw = {
+            const markdownBlock: MarkdownBlock = {
                 tag: 'single-choice',
                 id: 'test-id',
                 rawTokens: marked.lexer(`#### Content
@@ -423,7 +423,7 @@ b
 #### Explanation
 This is why B is correct.`;
 
-    const block: MarkdownBlockRaw = {
+    const block: MarkdownBlock = {
       tag: 'single-choice',
       id: 'test-id',
       name: 'Test Question',
@@ -462,7 +462,7 @@ a
 #### Explanation
 Since $\\alpha = 1$ by definition.`;
 
-    const block: MarkdownBlockRaw = {
+    const block: MarkdownBlock = {
       tag: 'single-choice',
       id: 'latex-test',
       rawTokens: marked.lexer(markdown)
@@ -491,7 +491,7 @@ b: Second choice
 #### Answer
 b`;
 
-    const block: MarkdownBlockRaw = {
+    const block: MarkdownBlock = {
       tag: 'single-choice',
       id: 'minimal-test',
       rawTokens: marked.lexer(markdown)
@@ -531,7 +531,7 @@ This is the explanation.
 It can also have multiple lines and LaTeX content.`;
 
     const tokens = marked.lexer(markdown);
-    const blockRaw: MarkdownBlockRaw = {
+    const blockRaw: MarkdownBlock = {
       id: 'test-id',
       rawTokens: tokens,
       tag: 'single-choice'

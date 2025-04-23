@@ -12,7 +12,7 @@ import {
     convertDefinitionMarkdown
 } from './noted-block';
 import { RawData } from '../convert-helper';
-import { MarkdownBlockRaw } from '../convert-markdown-helper';
+import { MarkdownBlock } from '../convert-markdown-helper';
 
 describe('NotedBlock', () => {
     describe('fromNode', () => {
@@ -58,7 +58,7 @@ describe('NotedBlock', () => {
             const markdownContent = 'Test content';
             const tokens = marked.lexer(markdownContent);
             
-            const markdownBlock: MarkdownBlockRaw = {
+            const markdownBlock: MarkdownBlock = {
                 tag: 'definition',
                 id: 'test-id',
                 rawTokens: tokens
@@ -78,7 +78,7 @@ describe('NotedBlock', () => {
             const markdownContent = '#### content\nTest content';
             const tokens = marked.lexer(markdownContent);
             
-            const markdownBlock: MarkdownBlockRaw = {
+            const markdownBlock: MarkdownBlock = {
                 tag: 'definition',
                 name: 'Test Name',
                 id: 'test-id',
@@ -109,7 +109,7 @@ console.log('Code block');
 
 And some math: $$E = mc^2$$`;
 
-            const block: MarkdownBlockRaw = {
+            const block: MarkdownBlock = {
                 tag: 'lemma',
                 id: 'lemma-id',
                 rawTokens: marked.lexer(markdown)
@@ -151,7 +151,7 @@ And some math: $$E = mc^2$$`;
         });
 
         it('should work with convertDefinitionMarkdown', () => {
-            const markdownBlock: MarkdownBlockRaw = {
+            const markdownBlock: MarkdownBlock = {
                 tag: 'definition',
                 id: 'test-id',
                 rawTokens: marked.lexer('Test content')

@@ -1,7 +1,7 @@
 import { BlockSchema, QuestSchema, SectionSchema, Category } from "./schemas";
 import { convertParaMarkdown } from "./blocks/para-block";
 import { marked, Token } from 'marked';
-import { MarkdownBlockRaw, parseQuestHeader } from "./convert-markdown-helper";
+import { MarkdownBlock, parseQuestHeader } from "./convert-markdown-helper";
 import { convertFactMarkdown, convertLemmaMarkdown, convertPropositionMarkdown, convertRemarkMarkdown, convertTheoremMarkdown } from "./blocks/noted-block";
 import { convertDefinitionMarkdown } from "./blocks/noted-block";
 import { convertSingleChoiceMarkdown } from "./blocks/single-choice-block";
@@ -9,7 +9,7 @@ import { convertProofReorderMarkdown } from "./blocks/proof-reorder-block";
 import { convertScratchWorkMarkdown } from "./blocks/scratch-work-block";
 import { convertContradictionMarkdown } from "./blocks/contradiction-block";
 // 定义转换函数的类型
-type ConvertFunction = (block: MarkdownBlockRaw) => BlockSchema;
+type ConvertFunction = (block: MarkdownBlock) => BlockSchema;
 
 // 转换函数映射表
 const convertBlockMap: Record<string, ConvertFunction> = {
@@ -28,7 +28,7 @@ const convertBlockMap: Record<string, ConvertFunction> = {
 
 interface MarkdownSection {
   name: string;
-  blocks: MarkdownBlockRaw[];
+  blocks: MarkdownBlock[];
 }
 
 interface MarkdownQuest {

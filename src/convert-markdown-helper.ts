@@ -1,6 +1,6 @@
 import { Token } from 'marked';
  
-export interface MarkdownBlockRaw {
+export interface MarkdownBlock {
     tag: string;
     name?: string;
     id: string;

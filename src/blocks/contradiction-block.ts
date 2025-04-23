@@ -1,7 +1,7 @@
 import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
 import { convertRawContent } from "../convert-helper";
-import { MarkdownBlockRaw, extractProperties, checkRequiredProperties } from "../convert-markdown-helper";
+import { MarkdownBlock, extractProperties, checkRequiredProperties } from "../convert-markdown-helper";
 
 export const ContradictionType = 'CONTRADICTION' as const;
 
@@ -181,7 +181,7 @@ export class ContradictionBlock implements BlockSchema {
    * It can also have multiple lines and LaTeX content.
    * ```
    */
-  static fromMarkdown(markdown: MarkdownBlockRaw): ContradictionBlock {
+  static fromMarkdown(markdown: MarkdownBlock): ContradictionBlock {
     const { content, properties } = extractProperties(markdown.rawTokens);
 
     checkRequiredProperties(properties, ['choices', 'answer', 'explanation']);
@@ -238,6 +238,6 @@ export function convertContradictionBlockNode(rawData: RawData): ContradictionBl
   return ContradictionBlock.fromNode(rawData);
 }
 
-export function convertContradictionMarkdown(markdown: MarkdownBlockRaw): ContradictionBlock {
+export function convertContradictionMarkdown(markdown: MarkdownBlock): ContradictionBlock {
   return ContradictionBlock.fromMarkdown(markdown);
 }
