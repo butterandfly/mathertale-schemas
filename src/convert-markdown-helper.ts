@@ -264,3 +264,4 @@ export function checkRequiredProperties(properties: Record<string, string>, requ
     }
   });
 }
+

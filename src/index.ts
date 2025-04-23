@@ -7,11 +7,14 @@ export {
     convertQuestCanvas,
 } from './extract-content';
 
+export { convertQuestMarkdown } from './convert-quest-markdown';
+
 export { 
     BlockSchema, SectionSchema, QuestSchema, 
     QuestShortSchema, Category, 
     SoloQuestSchema, SoloQuestShortSchema, BaseQuestSchema,
     JourneySchema, JourneyShortSchema, DevStatus,
+    getQuestText
 } from './schemas';
 
 export { isValidUUID, Metadata, RawData, BlockNodeConverter } from './convert-helper';

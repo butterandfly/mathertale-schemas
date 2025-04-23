@@ -326,11 +326,25 @@ Basic arithmetic`;
                     ],
                     answer: 'b',
                     explanation: 'Basic arithmetic'
-                }
+                },
+                'Basic Math Question'
             );
 
             const text = block.getText();
-            expect(text).toBe('What is 2+2?\n\nchoices:\na: 3\nb: 4\nc: 5\n\nanswer:\nb\n\nexplanation:\nBasic arithmetic');
+            expect(text).toBe(`Single Choice Question: Basic Math Question
+What is 2+2?
+
+choices:
+a: 3
+b: 4
+c: 5
+
+answer:
+b
+
+explanation:
+Basic arithmetic
+---`);
         });
 
         it('should handle empty content', () => {
@@ -348,7 +362,39 @@ Basic arithmetic`;
             );
 
             const text = block.getText();
-            expect(text).toBe('\n\nchoices:\na: 3\nb: 4\n\nanswer:\nb\n\nexplanation:\nBasic arithmetic');
+            const expected = "Single Choice Question: undefined\n\n\nchoices:\na: 3\nb: 4\n\nanswer:\nb\n\nexplanation:\nBasic arithmetic\n---";
+            expect(text).toBe(expected);
+        });
+
+        it('should handle block with name', () => {
+            const block = new SingleChoiceBlock(
+                'test-id',
+                'Test question content',
+                {
+                    choices: [
+                        { key: 'a', content: 'Option A' },
+                        { key: 'b', content: 'Option B' },
+                    ],
+                    answer: 'a',
+                    explanation: 'Option A is correct'
+                },
+                'Question Title'
+            );
+
+            const text = block.getText();
+            expect(text).toBe(`Single Choice Question: Question Title
+Test question content
+
+choices:
+a: Option A
+b: Option B
+
+answer:
+a
+
+explanation:
+Option A is correct
+---`);
         });
     });
 

@@ -75,7 +75,7 @@ describe('NotedBlock', () => {
         });
 
         it('should handle markdown block with name', () => {
-            const markdownContent = '#### content\nTest content';
+            const markdownContent = 'Test content';
             const tokens = marked.lexer(markdownContent);
             
             const markdownBlock: MarkdownBlock = {
@@ -96,8 +96,7 @@ describe('NotedBlock', () => {
         });
 
         it('should handle complex markdown content', () => {
-            const markdown = `#### Content
-Here's a complex content with:
+            const markdown = `Here's a complex content with:
 
 1. Ordered list
 2. **Bold text**
@@ -126,9 +125,19 @@ And some math: $$E = mc^2$$`;
     });
 
     describe('getText', () => {
-        it('should return the content', () => {
+        it('should return formatted text with capitalized type', () => {
             const block = new NotedBlock('test-id', 'Test content', DefinitionType, 'Test Name');
-            expect(block.getText()).toBe('Test content');
+            expect(block.getText()).toBe('Definition: Test Name\nTest content');
+        });
+
+        it('should handle lowercase type input', () => {
+            const block = new NotedBlock('test-id', 'Test content', 'theorem', 'Test Name');
+            expect(block.getText()).toBe('Theorem: Test Name\nTest content');
+        });
+
+        it('should handle uppercase type input', () => {
+            const block = new NotedBlock('test-id', 'Test content', 'LEMMA', 'Test Name');
+            expect(block.getText()).toBe('Lemma: Test Name\nTest content');
         });
     });
 

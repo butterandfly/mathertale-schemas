@@ -152,6 +152,34 @@ function parseMarkdownQuest(markdown: string): MarkdownQuest {
 }
 
 /**
+ * 验证每个block都有ID
+ * @param quest 解析后的Quest对象
+ * @throws 如果有block没有ID则抛出错误
+ */
+function validateBlockIds(quest: MarkdownQuest): void {
+  quest.sections.forEach((section, sectionIndex) => {
+    section.blocks.forEach((block, blockIndex) => {
+      if (!block.id || block.id.trim() === '') {
+        const errorInfo = {
+          questName: quest.name,
+          questId: quest.id,
+          sectionName: section.name,
+          sectionIndex,
+          blockTag: block.tag,
+          blockName: block.name || '(unnamed)',
+          blockIndex
+        };
+        
+        throw new Error(
+          `Block ID is missing! Details: ${JSON.stringify(errorInfo, null, 2)}\n` +
+          `This block appears in section "${section.name}" at position ${blockIndex + 1}`
+        );
+      }
+    });
+  });
+}
+
+/**
  * 注册block转换函数
  * @param tag block类型
  * @param converter 转换函数
@@ -167,12 +195,14 @@ export function registerBlockConverter(tag: string, converter: ConvertFunction):
  */
 export function convertQuestMarkdown(markdown: string): QuestSchema {
   const parsedQuest = parseMarkdownQuest(markdown);
+  
+  // 验证所有block都有ID
+  validateBlockIds(parsedQuest);
 
   const quest: QuestSchema = {
     id: parsedQuest.id,
     name: parsedQuest.name,
     desc: parsedQuest.desc,
-    // category: parsedQuest.category ? Category[parsedQuest.category as keyof typeof Category] : undefined,
     category: parsedQuest.category as Category,
     blockCount: 0,
     sections: [],

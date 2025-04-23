@@ -19,7 +19,8 @@ export class NotedBlock implements BlockSchema {
     ) {}
 
     getText(): string {
-        return this.content;
+        const capitalizedType = this.type.charAt(0).toUpperCase() + this.type.slice(1).toLowerCase();
+        return `${capitalizedType}: ${this.name}\n${this.content}`;
     }
 
     static fromNode(rawData: RawData, type: string): NotedBlock {
@@ -31,11 +32,23 @@ export class NotedBlock implements BlockSchema {
         );
     }
 
+    /**
+     * 从Markdown块创建NotedBlock对象
+     * @param block - 包含原始标记数据的Markdown块
+     * @param type - 块的类型
+     * @returns 新的NotedBlock对象
+     * @throws 如果内容为空则抛出错误
+     */
     static fromMarkdown(block: MarkdownBlock, type: string): NotedBlock {
         const { content, properties } = extractProperties(block.rawTokens);
+
+        if (!content && !properties.content) {
+            throw new Error(`Content is missing:\n ${JSON.stringify(block)}`);
+        }
+
         return new NotedBlock(
             block.id,
-            properties.content || content || '',
+            content,
             type,
             block.name || ''
         );

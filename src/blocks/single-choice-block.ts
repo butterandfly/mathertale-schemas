@@ -32,7 +32,8 @@ export class SingleChoiceBlock implements BlockSchema {
       .map(choice => `${choice.key}: ${choice.content}`)
       .join('\n');
 
-    return `${this.content}
+    return `Single Choice Question: ${this.name}
+${this.content}
 
 choices:
 ${choicesText}
@@ -41,7 +42,8 @@ answer:
 ${this.questionData.answer}
 
 explanation:
-${this.questionData.explanation}`;
+${this.questionData.explanation}
+---`;
   }
 
   /**

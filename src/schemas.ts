@@ -74,3 +74,22 @@ export interface SoloQuestSchema extends BaseQuestSchema {
 }
 
 export type SoloQuestShortSchema = Omit<SoloQuestSchema, 'sections'>;
+
+/**
+ * 生成Quest的文字表示
+ * @param quest Quest对象
+ * @returns 格式化的文本
+ */
+export function getQuestText(quest: BaseQuestSchema): string {
+  let text = `## ${quest.name}\n\n`;
+  
+  for (const section of quest.sections) {
+    text += `### ${section.name}\n\n`;
+    
+    for (const block of section.blocks) {
+      text += `${block.getText()}\n\n`;
+    }
+  }
+  
+  return text.trim();
+}
