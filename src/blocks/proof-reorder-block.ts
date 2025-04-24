@@ -50,6 +50,30 @@ export class ProofReorderBlock implements BlockSchema {
     return text;
   }
 
+  static validate(block: ProofReorderBlock): void {
+    const { orderItems, questionOrder } = block.questionData;
+
+    if (orderItems.length === 0) {
+      throw new Error(`Parts cannot be empty for block ID: ${block.id}`);
+    }
+
+    if (!questionOrder) {
+      throw new Error(`Question order is required for block ID: ${block.id}`);
+    }
+
+    const questionOrderArray = questionOrder.split(',');
+    if (orderItems.length !== questionOrderArray.length) {
+      throw new Error(`Number of parts (${orderItems.length}) does not match the length of question order (${questionOrderArray.length}) for block ID: ${block.id}`);
+    }
+
+    // Optional: Add check to ensure all part IDs in questionOrder exist in orderItems if needed
+    // const partIds = orderItems.map(item => item.id);
+    // const orderIds = questionOrderArray.map(id => id.trim());
+    // if (!orderIds.every(id => partIds.includes(id))) {
+    //   throw new Error(`Question order contains invalid part IDs for block ID: ${block.id}`);
+    // }
+  }
+
   /**
    * Block node template:
    * 
@@ -81,7 +105,7 @@ export class ProofReorderBlock implements BlockSchema {
     const questionOrderArray = questionOrder.trim().split(',');
     const cleanOrderArray = questionOrderArray.map(s => s.trim());
     
-    return new ProofReorderBlock(
+    const block = new ProofReorderBlock(
       rawData.id,
       blockContent,
       {
@@ -93,6 +117,9 @@ export class ProofReorderBlock implements BlockSchema {
       },
       rawData.name
     );
+
+    this.validate(block); // Validate the constructed block
+    return block;
   }
 
   /**
@@ -116,8 +143,6 @@ export class ProofReorderBlock implements BlockSchema {
   static fromMarkdown(markdown: MarkdownBlock): ProofReorderBlock {
     const { content, properties } = extractProperties(markdown.rawTokens);
 
-    checkRequiredProperties(properties, ['question order']);
-
     // Get all parts from properties
     const parts: string[] = [];
     for (const [key, value] of Object.entries(properties)) {
@@ -126,13 +151,9 @@ export class ProofReorderBlock implements BlockSchema {
       }
     }
 
-    if (parts.length === 0) {
-      throw new Error('parts are required');
-    }
+    const questionOrder = properties['question order']?.trim() || ''; // Ensure questionOrder is defined
 
-    const questionOrder = properties['question order'].trim();
-
-    return new ProofReorderBlock(
+    const newBlock = new ProofReorderBlock(
       markdown.id,
       content,
       {
@@ -144,6 +165,9 @@ export class ProofReorderBlock implements BlockSchema {
       },
       markdown.name
     );
+
+    this.validate(newBlock); // Validate the constructed block
+    return newBlock;
   }
 }
 

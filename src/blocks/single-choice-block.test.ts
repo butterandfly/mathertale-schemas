@@ -602,39 +602,38 @@ It can also have multiple lines and LaTeX content.`;
   });
 
   it('should throw error when choices section is missing', () => {
-    const markdown = `This is the question content.
-
+    const markdown = `
 #### Answer
 b
 
 #### Explanation
-This is the explanation.`;
-
+Explanation here.
+`;
     const tokens = marked.lexer(markdown);
+
     expect(() => convertSingleChoiceMarkdown({
       id: 'test-id',
       rawTokens: tokens,
       tag: 'single-choice'
-    })).toThrow('choices is required');
+    })).toThrow('Choices cannot be empty for block ID: test-id');
   });
 
   it('should throw error when answer section is missing', () => {
-    const markdown = `This is the question content.
-
+    const markdown = `
 #### Choices
-a: First choice
-b: Second choice
-c: Third choice
+a: Choice A
+b: Choice B
 
 #### Explanation
-This is the explanation.`;
-
+Explanation here.
+`;
     const tokens = marked.lexer(markdown);
+
     expect(() => convertSingleChoiceMarkdown({
       id: 'test-id',
       rawTokens: tokens,
       tag: 'single-choice'
-    })).toThrow('answer is required');
+    })).toThrow('Answer is required for block ID: test-id');
   });
 
   it('should handle content before any heading', () => {

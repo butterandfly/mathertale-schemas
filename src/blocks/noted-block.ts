@@ -24,12 +24,20 @@ export class NotedBlock implements BlockSchema {
     }
 
     static fromNode(rawData: RawData, type: string): NotedBlock {
-        return new NotedBlock(
+        const block = new NotedBlock(
             rawData.id,
             rawData.rawContent,
             type,
             rawData.name || ''
         );
+        NotedBlock.validate(block);
+        return block;
+    }
+
+    static validate(block: NotedBlock): void {
+        if (!block.content || block.content.trim() === '') {
+            throw new Error(`Content cannot be empty for block ID: ${block.id} (Type: ${block.type})`);
+        }
     }
 
     /**
@@ -42,16 +50,14 @@ export class NotedBlock implements BlockSchema {
     static fromMarkdown(block: MarkdownBlock, type: string): NotedBlock {
         const { content, properties } = extractProperties(block.rawTokens);
 
-        if (!content && !properties.content) {
-            throw new Error(`Content is missing:\n ${JSON.stringify(block)}`);
-        }
-
-        return new NotedBlock(
+        const newBlock = new NotedBlock(
             block.id,
             content,
             type,
             block.name || ''
         );
+        NotedBlock.validate(newBlock);
+        return newBlock;
     }
 }
 

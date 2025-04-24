@@ -186,7 +186,7 @@ explanation:
 Test explanation`
       };
 
-      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('answer must be 2 keys');
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('Answer must contain exactly 2 keys for block ID: test-id');
     });
 
     it('should throw error when answer key does not exist in choices', () => {
@@ -206,7 +206,7 @@ explanation:
 Test explanation`
       };
 
-      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('answer key "c" does not exist in choices');
+      expect(() => ContradictionBlock.fromNode(rawData)).toThrow('Answer key "c" does not exist in choices (a, b) for block ID: test-id');
     });
   });
 
@@ -305,7 +305,7 @@ This is the explanation.`;
         tag: 'contradiction'
       };
 
-      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('choices is required');
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('Choices cannot be empty for block ID: test-id');
     });
 
     it('should throw error when answer is missing', () => {
@@ -316,7 +316,7 @@ a: First choice
 b: Second choice
 
 #### Explanation
-This is the explanation.`;
+Test explanation`;
 
       const tokens = marked.lexer(markdown);
       const blockRaw: MarkdownBlock = {
@@ -325,7 +325,7 @@ This is the explanation.`;
         tag: 'contradiction'
       };
 
-      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('answer is required');
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('Answer must contain exactly 2 keys for block ID: test-id');
     });
 
     it('should throw error when explanation is missing', () => {
@@ -345,7 +345,54 @@ a, b`;
         tag: 'contradiction'
       };
 
-      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('explanation is required');
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('Explanation is required for block ID: test-id');
+    });
+
+    it('should throw error when answer length is not 2', () => {
+      const markdown = `This is the main content.
+
+#### Choices
+a: First choice
+b: Second choice
+c: Third choice
+
+#### Answer
+a
+
+#### Explanation
+Test explanation`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlock = {
+        id: 'test-id',
+        rawTokens: tokens,
+        tag: 'contradiction'
+      };
+
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('Answer must contain exactly 2 keys for block ID: test-id');
+    });
+
+    it('should throw error when answer key does not exist in choices', () => {
+      const markdown = `This is the main content.
+
+#### Choices
+a: First choice
+b: Second choice
+
+#### Answer
+a, c
+
+#### Explanation
+Test explanation`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlock = {
+        id: 'test-id',
+        rawTokens: tokens,
+        tag: 'contradiction'
+      };
+
+      expect(() => ContradictionBlock.fromMarkdown(blockRaw)).toThrow('Answer key "c" does not exist in choices (a, b) for block ID: test-id');
     });
   });
 

@@ -51,6 +51,24 @@ describe('NotedBlock', () => {
                 name: 'Test Name'
             });
         });
+
+        it('should throw error if rawContent is empty', () => {
+            const rawData: RawData = {
+                id: 'empty-id',
+                tag: 'definition',
+                rawContent: ''
+            };
+            expect(() => NotedBlock.fromNode(rawData, DefinitionType)).toThrow('Content cannot be empty for block ID: empty-id (Type: DEFINITION)');
+        });
+
+        it('should throw error if rawContent is only whitespace', () => {
+            const rawData: RawData = {
+                id: 'whitespace-id',
+                tag: 'theorem',
+                rawContent: '   \n  '
+            };
+            expect(() => NotedBlock.fromNode(rawData, TheoremType)).toThrow('Content cannot be empty for block ID: whitespace-id (Type: THEOREM)');
+        });
     });
 
     describe('fromMarkdown', () => {
@@ -121,6 +139,28 @@ And some math: $$E = mc^2$$`;
                 type: LemmaType,
                 content: markdown.replace('#### Content\n', ''),
             });
+        });
+
+        it('should throw error if markdown content is empty', () => {
+            const markdownContent = ''; // Empty content
+            const tokens = marked.lexer(markdownContent);
+            const markdownBlock: MarkdownBlock = {
+                tag: 'fact',
+                id: 'empty-md-id',
+                rawTokens: tokens,
+            };
+            expect(() => NotedBlock.fromMarkdown(markdownBlock, FactType)).toThrow('Content cannot be empty for block ID: empty-md-id (Type: FACT)');
+        });
+
+        it('should throw error if markdown content is only whitespace', () => {
+            const markdownContent = '    '; // Whitespace content
+            const tokens = marked.lexer(markdownContent);
+            const markdownBlock: MarkdownBlock = {
+                tag: 'remark',
+                id: 'whitespace-md-id',
+                rawTokens: tokens,
+            };
+            expect(() => NotedBlock.fromMarkdown(markdownBlock, RemarkType)).toThrow('Content cannot be empty for block ID: whitespace-md-id (Type: REMARK)');
         });
     });
 

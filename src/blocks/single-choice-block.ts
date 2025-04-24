@@ -98,14 +98,6 @@ ${this.questionData.explanation}
       throw new Error('choices section is required: ' + rawContent);
     }
 
-    if (!answer) {
-      throw new Error('answer section is required: ' + rawContent);
-    }
-
-    if (!explanation) {
-      throw new Error('explanation section is required: ' + rawContent);
-    }
-
     choicesRaw.split('\n').forEach(line => {
       // Split only at the first colon to handle content that may contain colons
       const colonIndex = line.indexOf(':');
@@ -117,10 +109,6 @@ ${this.questionData.explanation}
         }
       }
     });
-
-    if (choices.length === 0) {
-      throw new Error('choices section is empty: ' + rawContent);
-    }
     
     // Assemble the question data
     const questionData: SingleChoiceQuestionData = {
@@ -132,14 +120,35 @@ ${this.questionData.explanation}
     return { blockContent, questionData };
   }
 
+  static validate(block: SingleChoiceBlock): void {
+    const { choices, answer } = block.questionData;
+
+    if (choices.length === 0) {
+      throw new Error(`Choices cannot be empty for block ID: ${block.id}`);
+    }
+
+    if (!answer) {
+      throw new Error(`Answer is required for block ID: ${block.id}`);
+    }
+
+    const choiceKeys = choices.map(choice => choice.key);
+    if (!choiceKeys.includes(answer)) {
+      throw new Error(`Answer "${answer}" is not a valid choice key (${choiceKeys.join(', ')}) for block ID: ${block.id}`);
+    }
+
+    // Explanation is optional, so no validation needed here unless other rules apply.
+  }
+
   static fromNode(rawData: RawData): SingleChoiceBlock {
     const { blockContent, questionData } = this.convertContent(rawData.rawContent);
-    return new SingleChoiceBlock(
+    const block = new SingleChoiceBlock(
       rawData.id,
       blockContent,
       questionData,
       rawData.name
     );
+    this.validate(block); // Validate the constructed block
+    return block;
   }
 
   /**
@@ -165,8 +174,6 @@ ${this.questionData.explanation}
   static fromMarkdown(block: MarkdownBlock): SingleChoiceBlock {
     const { content, properties } = extractProperties(block.rawTokens);
 
-    checkRequiredProperties(properties, ['choices', 'answer']);
-    
     // Parse choices from the choices property
     const choices: Choice[] = [];
     if (properties.choices) {
@@ -183,7 +190,7 @@ ${this.questionData.explanation}
       });
     }
 
-    return new SingleChoiceBlock(
+    const newBlock = new SingleChoiceBlock(
       block.id,
       properties.content || content || '',
       {
@@ -193,6 +200,9 @@ ${this.questionData.explanation}
       },
       block.name
     );
+
+    this.validate(newBlock); // Validate the constructed block
+    return newBlock;
   }
 }
 

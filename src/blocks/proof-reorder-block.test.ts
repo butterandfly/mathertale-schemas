@@ -197,7 +197,7 @@ First part content
         tag: 'proof-reorder'
       };
 
-      expect(() => ProofReorderBlock.fromMarkdown(blockRaw)).toThrow('parts are required');
+      expect(() => ProofReorderBlock.fromMarkdown(blockRaw)).toThrow('Parts cannot be empty for block ID: test-id');
     });
 
     it('should throw error when question order is missing', () => {
@@ -213,7 +213,30 @@ First part content`;
         tag: 'proof-reorder'
       };
 
-      expect(() => ProofReorderBlock.fromMarkdown(blockRaw)).toThrow('question order is required');
+      expect(() => ProofReorderBlock.fromMarkdown(blockRaw)).toThrow('Question order is required for block ID: test-id');
+    });
+
+    it('should throw error when part count and question order count mismatch', () => {
+      const markdown = `This is the main content.
+
+#### Part 1
+First part content
+
+#### Part 2
+Second part content
+
+#### Question Order
+1`;
+
+      const tokens = marked.lexer(markdown);
+      const blockRaw: MarkdownBlock = {
+        id: 'test-id',
+        rawTokens: tokens,
+        tag: 'proof-reorder'
+      };
+
+      expect(() => ProofReorderBlock.fromMarkdown(blockRaw))
+        .toThrow('Number of parts (2) does not match the length of question order (1) for block ID: test-id');
     });
   });
 

@@ -19,10 +19,18 @@ export class ParaBlock implements BlockSchema {
 
     // 从 RawData 创建实例
     static fromNode(rawData: RawData): BlockSchema {
-        return new ParaBlock(
+        const block = new ParaBlock(
             rawData.id,
             rawData.rawContent
         );
+        ParaBlock.validate(block); // Use ParaBlock.validate instead of this.validate
+        return block;
+    }
+
+    static validate(block: ParaBlock): void {
+        if (!block.content || block.content.trim() === '') {
+            throw new Error(`Content cannot be empty for block ID: ${block.id}`);
+        }
     }
 
     // 从 Markdown 创建实例
@@ -30,14 +38,12 @@ export class ParaBlock implements BlockSchema {
     static fromMarkdown(block: MarkdownBlock): BlockSchema {
         const { content, properties } = extractProperties(block.rawTokens);
 
-        if (!content && !properties.content) {
-            throw new Error('content is required: \n' + block.rawTokens);
-        }
-
-        return new ParaBlock(
+        const newBlock = new ParaBlock(
             block.id,
             properties.content || content || ''
         );
+        ParaBlock.validate(newBlock); // Use ParaBlock.validate instead of this.validate
+        return newBlock;
     }
 }
 

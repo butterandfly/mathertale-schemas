@@ -39,6 +39,24 @@ describe('ParaBlock', () => {
         type: ParaType
       });
     });
+
+    it('should throw error if rawContent is empty', () => {
+      const rawData: RawData = {
+        id: 'empty-id',
+        tag: 'para',
+        rawContent: ''
+      };
+      expect(() => ParaBlock.fromNode(rawData)).toThrow('Content cannot be empty for block ID: empty-id');
+    });
+
+    it('should throw error if rawContent is only whitespace', () => {
+      const rawData: RawData = {
+        id: 'whitespace-id',
+        tag: 'para',
+        rawContent: '   \n  '
+      };
+      expect(() => ParaBlock.fromNode(rawData)).toThrow('Content cannot be empty for block ID: whitespace-id');
+    });
   });
 
   describe('fromMarkdown', () => {
@@ -80,6 +98,50 @@ describe('ParaBlock', () => {
         content: 'Test content',
         type: ParaType
       });
+    });
+
+    it('should throw error if markdown content is empty', () => {
+      const markdownContent = ''; // Empty content
+      const tokens = marked.lexer(markdownContent);
+      const markdownBlock: MarkdownBlock = {
+        tag: 'para',
+        id: 'empty-md-id',
+        rawTokens: tokens,
+      };
+      expect(() => ParaBlock.fromMarkdown(markdownBlock)).toThrow('Content cannot be empty for block ID: empty-md-id');
+    });
+
+    it('should throw error if markdown content is only whitespace', () => {
+      const markdownContent = '    '; // Whitespace content
+      const tokens = marked.lexer(markdownContent);
+      const markdownBlock: MarkdownBlock = {
+        tag: 'para',
+        id: 'whitespace-md-id',
+        rawTokens: tokens,
+      };
+      expect(() => ParaBlock.fromMarkdown(markdownBlock)).toThrow('Content cannot be empty for block ID: whitespace-md-id');
+    });
+
+    it('should throw error if content property is empty', () => {
+      const markdownContent = '#### content\n'; // Empty content property
+      const tokens = marked.lexer(markdownContent);
+      const markdownBlock: MarkdownBlock = {
+        tag: 'para',
+        id: 'empty-prop-id',
+        rawTokens: tokens,
+      };
+      expect(() => ParaBlock.fromMarkdown(markdownBlock)).toThrow('Content cannot be empty for block ID: empty-prop-id');
+    });
+
+    it('should throw error if content property is only whitespace', () => {
+      const markdownContent = '#### content\n  \n '; // Whitespace content property
+      const tokens = marked.lexer(markdownContent);
+      const markdownBlock: MarkdownBlock = {
+        tag: 'para',
+        id: 'whitespace-prop-id',
+        rawTokens: tokens,
+      };
+      expect(() => ParaBlock.fromMarkdown(markdownBlock)).toThrow('Content cannot be empty for block ID: whitespace-prop-id');
     });
   });
 

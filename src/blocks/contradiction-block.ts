@@ -123,10 +123,6 @@ export class ContradictionBlock implements BlockSchema {
       }
     });
 
-    if (choices.length === 0) {
-      throw new Error('choices section is empty: ' + rawData.rawContent);
-    }
-    
     // Process the answer section: convert comma-separated keys to an array
     const answer: string[] = [];
     if (answerRaw) {
@@ -137,18 +133,7 @@ export class ContradictionBlock implements BlockSchema {
       });
     }
 
-    if (answer.length !== 2) {
-      throw new Error('answer must be 2 keys: ' + rawData.rawContent);
-    }
-
-    // Validate that all answer keys exist in choices
-    for (const key of answer) {
-      if (!choices.some(choice => choice.key === key)) {
-        throw new Error(`answer key "${key}" does not exist in choices: ` + rawData.rawContent);
-      }
-    }
-
-    return new ContradictionBlock(
+    const block = new ContradictionBlock(
       rawData.id,
       blockContent,
       {
@@ -158,6 +143,32 @@ export class ContradictionBlock implements BlockSchema {
       },
       rawData.name
     );
+
+    this.validate(block); // Validate the constructed block
+    return block;
+  }
+
+  static validate(block: ContradictionBlock): void {
+    const { choices, answer, explanation } = block.questionData;
+
+    if (choices.length === 0) {
+      throw new Error(`Choices cannot be empty for block ID: ${block.id}`);
+    }
+
+    if (!explanation) { // Assuming explanation is always required based on fromNode/checkRequiredProperties
+      throw new Error(`Explanation is required for block ID: ${block.id}`);
+    }
+
+    if (!answer || answer.length !== 2) {
+      throw new Error(`Answer must contain exactly 2 keys for block ID: ${block.id}`);
+    }
+
+    const choiceKeys = choices.map(choice => choice.key);
+    for (const key of answer) {
+      if (!choiceKeys.includes(key)) {
+        throw new Error(`Answer key "${key}" does not exist in choices (${choiceKeys.join(', ')}) for block ID: ${block.id}`);
+      }
+    }
   }
 
   /**
@@ -184,44 +195,34 @@ export class ContradictionBlock implements BlockSchema {
   static fromMarkdown(markdown: MarkdownBlock): ContradictionBlock {
     const { content, properties } = extractProperties(markdown.rawTokens);
 
-    checkRequiredProperties(properties, ['choices', 'answer', 'explanation']);
-    
     // Parse choices from the choices property
     const choices: ContradictionChoice[] = [];
-
-    const choiceLines = properties.choices.split('\n');
-    choiceLines.forEach((line: string) => {
-      const colonIndex = line.indexOf(':');
-      if (colonIndex > 0) {
-        const key = line.substring(0, colonIndex).trim();
-        const content = line.substring(colonIndex + 1).trim();
-        if (key && content) {
-          choices.push({ key, content });
+    // Ensure properties.choices exists before splitting
+    if (properties.choices) {
+      const choiceLines = properties.choices.split('\n');
+      choiceLines.forEach((line: string) => {
+        const colonIndex = line.indexOf(':');
+        if (colonIndex > 0) {
+          const key = line.substring(0, colonIndex).trim();
+          const content = line.substring(colonIndex + 1).trim();
+          if (key && content) {
+            choices.push({ key, content });
+          }
         }
-      }
-    });
+      });
+    }
 
     // Parse answer from the answer property
     const answer: string[] = [];
-    properties.answer.split(',').map((key: string) => key.trim()).forEach((key: string) => {
-      if (key && !answer.includes(key)) {
-        answer.push(key);
-      }
-    });
-
-    // Validate answer length
-    if (answer.length !== 2) {
-      throw new Error('answer must be 2 keys: ' + markdown.rawTokens);
+    if (properties.answer) {
+      properties.answer.split(',').map((key: string) => key.trim()).forEach((key: string) => {
+        if (key && !answer.includes(key)) {
+          answer.push(key);
+        }
+      });
     }
 
-    // Validate that all answer keys exist in choices
-    for (const key of answer) {
-      if (!choices.some(choice => choice.key === key)) {
-        throw new Error(`answer key "${key}" does not exist in choices: ` + markdown.rawTokens);
-      }
-    }
-
-    return new ContradictionBlock(
+    const block = new ContradictionBlock(
       markdown.id,
       properties.content || content || '',
       {
@@ -231,6 +232,9 @@ export class ContradictionBlock implements BlockSchema {
       },
       markdown.name
     );
+
+    this.validate(block); // Validate the constructed block
+    return block;
   }
 }
 
