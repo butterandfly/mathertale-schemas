@@ -14,7 +14,7 @@ export interface SectionSchema {
 }
 
 export const Category = {
-    FOUNDATIONAL: 'Foundational Mathematics',
+    FOUNDATIONAL: 'Fundamental Mathematics',
     ANALYSIS: 'Analysis',
     ALGEBRA: 'Algebra',
     PROBABILITY: 'Probability and Statistics'

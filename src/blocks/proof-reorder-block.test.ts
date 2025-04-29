@@ -256,10 +256,9 @@ Second part content
 
       const text = block.getText();
       expect(text).toBe(
-        'Main content\n\n' +
+        'Proof:\n\nMain content\n\n' + 
         'part-1:\nFirst part\n\n' +
-        'part-2:\nSecond part\n\n' +
-        'question-order:\n2,1'
+        'part-2:\nSecond part\n\n'
       );
     });
 
@@ -277,9 +276,8 @@ Second part content
 
       const text = block.getText();
       expect(text).toBe(
-        '\n\n' +
-        'part-1:\nFirst part\n\n' +
-        'question-order:\n1'
+        'Proof:\n\n\n\n' +
+        'part-1:\nFirst part\n\n'
       );
     });
   });

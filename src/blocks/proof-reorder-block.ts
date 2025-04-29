@@ -40,13 +40,11 @@ export class ProofReorderBlock implements BlockSchema {
 
   getText(): string {
     const { orderItems, questionOrder } = this.questionData;
-    let text = this.content + '\n\n';
+    let text = "Proof:\n\n" + this.content + '\n\n';
     
     orderItems.forEach((item, index) => {
       text += `part-${index + 1}:\n${item.content}\n\n`;
     });
-    
-    text += `question-order:\n${questionOrder}`;
     return text;
   }
 
