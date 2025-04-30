@@ -9,6 +9,7 @@ describe('convertQuestMarkdown', () => {
     const markdown = `# Quest: Test Quest
 id: test-id
 desc: This is a test quest.
+tags: tag 1, tag 2
 
 ## Section: Introduction
 
@@ -53,7 +54,8 @@ That's all for this quest.
     expect(result.dependentQuests).toEqual([]);
     expect(result.childQuests).toEqual([]);
     expect(result.updatedAt).toBeInstanceOf(Date);
-    
+    expect(result.tags).toEqual(['tag 1', 'tag 2']);
+
     // 检查sections
     expect(result.sections.length).toBe(2);
     
@@ -199,6 +201,7 @@ describe('convertAllBlocks', () => {
     const markdown = `# Quest: All Blocks Quest
 id: all-blocks
 desc: Testing all blocks.
+tags: tag 1, tag 2
 
 ## Section: All Blocks
 
@@ -360,6 +363,13 @@ This is the explanation.
     ]);
     expect(contradictionBlock.questionData.answer).toEqual(['a', 'c']);
     expect(contradictionBlock.questionData.explanation).toBe('This is the explanation.');
+
+    expect(result.id).toBe('all-blocks');
+    expect(result.name).toBe('All Blocks Quest');
+    expect(result.desc).toBe('Testing all blocks.');
+    expect(result.tags).toEqual(['tag 1', 'tag 2']);
+    expect(result.sections.length).toBe(1);
+    expect(result.sections[0].name).toBe('All Blocks');
   });
 
 });

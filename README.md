@@ -61,3 +61,10 @@ id: para-conclusion
 
 This is the conclusion.
 ```
+
+## Publishing to npm
+
+1.  **Build the project:** Make sure your code is compiled to JavaScript (usually in the `dist/` folder). Check your `package.json` for the build script (e.g., `pnpm build`).
+2.  **Update version:** Increment the `version` field in `package.json` according to semantic versioning rules.
+3.  **Login to npm:** Run `npm login` in your terminal and enter your npm credentials.
+4.  **Publish:** Run `npm publish`. If you use two-factor authentication, you might need to append `--otp=YOUR_OTP_CODE`.

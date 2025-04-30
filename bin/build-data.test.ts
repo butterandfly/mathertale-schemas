@@ -11,7 +11,7 @@ describe('buildJourneyData', () => {
         const questShortMap = journey.questShortMap
 
         expect(journey.name).toEqual('Journey 1')
-        expect(journey.category).toEqual('Foundational Mathematics')
+        expect(journey.category).toEqual('Fundamental Mathematics')
 
         expect(Object.keys(questShortMap).length).toEqual(4)
 

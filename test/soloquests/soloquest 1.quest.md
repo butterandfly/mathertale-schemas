@@ -2,6 +2,7 @@
 id: test-id
 desc: This is a test quest.
 category: Fundational Mathematics
+tags: tag 1, tag 2
 
 ## Section: Introduction
 

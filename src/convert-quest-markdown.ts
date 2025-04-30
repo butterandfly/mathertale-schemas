@@ -37,6 +37,7 @@ interface MarkdownQuest {
   desc: string;
   sections: MarkdownSection[];
   category?: string;
+  tags?: string[];
 }
 
 /**
@@ -62,6 +63,9 @@ function parseMarkdownQuest(markdown: string): MarkdownQuest {
   quest.desc = headerInfo['desc'] || '';
   if (headerInfo['category']) {
     quest.category = headerInfo['category'];
+  }
+  if (headerInfo['tags']) {
+    quest.tags = headerInfo['tags'].split(',').map(tag => tag.trim());
   }
 
   // 第二步：处理sections和blocks
@@ -204,6 +208,7 @@ export function convertQuestMarkdown(markdown: string): QuestSchema {
     name: parsedQuest.name,
     desc: parsedQuest.desc,
     category: parsedQuest.category as Category,
+    tags: parsedQuest.tags,
     blockCount: 0,
     sections: [],
     updatedAt: new Date(),

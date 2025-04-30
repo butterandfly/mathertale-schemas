@@ -173,9 +173,9 @@ export function buildAllSoloQuestData(rootDir: string, outputDir: string = 'data
 
         // Manually add missing properties for SoloQuestSchema
         const soloQuest: SoloQuestSchema = {
+            prerequisites: '', 
+            tags: [],
             ...quest,
-            prerequisites: '', // Default or extract from markdown if available
-            tags: [] // Default or extract from markdown if available
         };
 
         // Save each solo quest as a JSON file

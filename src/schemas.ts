@@ -40,6 +40,7 @@ export interface QuestSchema extends BaseQuestSchema {
   // 依赖关系
   dependentQuests: string[];
   childQuests: string[];
+  tags?: string[];
 }
 
 export type QuestShortSchema = Omit<QuestSchema, 'sections'>;
