@@ -41,11 +41,51 @@ interface MarkdownQuest {
 }
 
 /**
+ * 将 Obsidian 资源链接（![[xxx.svg]]）转为标准 markdown 图片链接
+ * 只处理 svg/png/jpg/jpeg，忽略代码块和行内代码，去掉子路径，资源名转url可用
+ */
+export function convertObsidianLinks(text: string): string {
+  // 先分割代码块和行内代码，避免替换
+  const codeBlockRegex = /(```[\s\S]*?```)/g;
+  const inlineCodeRegex = /(`[^`]*`)/g;
+  let codeBlocks: string[] = [];
+  let inlineCodes: string[] = [];
+  let replaced = text
+    .replace(codeBlockRegex, m => {
+      codeBlocks.push(m);
+      return `{{CODEBLOCK_${codeBlocks.length - 1}}}`;
+    })
+    .replace(inlineCodeRegex, m => {
+      inlineCodes.push(m);
+      return `{{INLINECODE_${inlineCodes.length - 1}}}`;
+    });
+
+  // 只替换svg/png/jpg/jpeg（不区分大小写）
+  replaced = replaced.replace(/!\[\[([^\]]+\.(svg|png|jpe?g))\]\]/gi, (match, filename) => {
+    // 去掉子路径
+    const base = filename.split(/[\\/]/).pop()!;
+    // alt为无扩展名
+    const alt = base.replace(/\.[^.]+$/, '');
+    // url编码
+    const url = encodeURIComponent(base);
+    return `![${alt}](/assets/${url})`;
+  });
+
+  // 还原行内代码和代码块
+  replaced = replaced
+    .replace(/\{\{INLINECODE_(\d+)\}\}/g, (_, i) => inlineCodes[Number(i)])
+    .replace(/\{\{CODEBLOCK_(\d+)\}\}/g, (_, i) => codeBlocks[Number(i)]);
+  return replaced;
+}
+
+/**
  * 解析markdown并转换为Quest对象
  * @param markdown markdown内容
  * @returns 解析后的Quest对象
  */
 function parseMarkdownQuest(markdown: string): MarkdownQuest {
+  // 先处理 Obsidian 资源链接
+  markdown = convertObsidianLinks(markdown);
   const tokens = marked.lexer(markdown);
   let currentSection: MarkdownSection | null = null;
   

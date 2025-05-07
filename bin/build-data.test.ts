@@ -86,6 +86,10 @@ describe('buildDatabase', () => {
         
         const demoQuestData = JSON.parse(readFileSync(demoQuestPath, 'utf8'))
         expect(demoQuestData.name).toEqual('Demo Quest')
+
+        // Check assets copied
+        const assetPath = path.join('./test/output/assets', 'sans.png')
+        expect(existsSync(assetPath)).toBeTruthy()
     })
 })
 

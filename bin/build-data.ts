@@ -7,6 +7,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { JourneyShortSchema } from '../src/schemas';
 import { convertQuestMarkdown } from '../src/convert-quest-markdown';
 import { SoloQuestSchema, SoloQuestShortSchema } from '../src/schemas';
+import fsx from 'fs-extra';
 
 /**
  * Build journey data from a journey canvas file.
@@ -196,6 +197,14 @@ export function buildAllSoloQuestData(rootDir: string, outputDir: string = 'data
     );
 }
 
+function copyAssets(rootDir: string, outputDir: string) {
+    const assetsSrc = path.join(rootDir, 'assets');
+    const assetsDest = path.join(outputDir, 'assets');
+    if (fsx.existsSync(assetsSrc)) {
+        fsx.copySync(assetsSrc, assetsDest, { overwrite: true });
+    }
+}
+
 export function buildDatabase(rootDir: string, outputDir: string = 'data'): void {
     // Ensure output directory exists
     if (!existsSync(outputDir)) {
@@ -228,4 +237,7 @@ export function buildDatabase(rootDir: string, outputDir: string = 'data'): void
 
     // Build solo quests data
     buildAllSoloQuestData(rootDir, outputDir);
+
+    // Copy assets directory
+    copyAssets(rootDir, outputDir);
 }

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { marked } from 'marked';
 import { MarkdownBlock } from './convert-markdown-helper';
 import { BlockSchema, QuestSchema } from './schemas';
-import { convertQuestMarkdown, registerBlockConverter } from './convert-quest-markdown';
+import { convertObsidianLinks, convertQuestMarkdown, registerBlockConverter } from './convert-quest-markdown';
 
 describe('convertQuestMarkdown', () => {
   it('should convert markdown to quest schema', () => {
@@ -193,6 +193,23 @@ Welcome to the quest!`;
     expect(result.sections[0].blocks.length).toBe(1);
     expect(result.sections[0].blocks[0].id).toBe('para-welcome');
     expect(result.sections[0].blocks[0].type).toBe('PARA');
+  });
+
+  it('should handle Obsidian links', () => {
+    const markdown = `# Quest: Obsidian Links Quest
+id: obsidian-links
+desc: Testing obsidian links.
+
+## Section: All Blocks
+
+### para: A Para Block
+id: para-block
+
+This is a image: ![[foo.png]]`;
+
+    const result = convertQuestMarkdown(markdown);
+    
+    expect(result.sections[0].blocks[0].content).toBe('This is a image: ![foo](/assets/foo.png)');
   });
 }); 
 
@@ -406,3 +423,53 @@ This is the explanation.
 //   });
 // });
 
+
+// ... existing code ...
+describe('Obsidian resource link conversion', () => {
+  it('should convert obsidian image links to standard markdown', () => {
+    const markdown = `# Quest: Image Test
+id: img-test
+
+test para ![[set_union.svg]] and ![[foo.JPG]] and ![[bar.png]] and ![[baz.jpeg]]`;
+    const result = convertObsidianLinks(markdown);
+    expect(result).toContain('![set_union](/assets/set_union.svg)');
+    expect(result).toContain('![foo](/assets/foo.JPG)');
+    expect(result).toContain('![bar](/assets/bar.png)');
+    expect(result).toContain('![baz](/assets/baz.jpeg)');
+  });
+
+  it('should remove subpath and url-encode', () => {
+    const markdown = `# Quest: Subpath
+id: subpath
+
+![[folder/my image 1.svg]] ![[sub/中文图片.png]]`;
+    const result = convertObsidianLinks(markdown);
+    expect(result).toContain('![my image 1](/assets/my%20image%201.svg)');
+    expect(result).toContain('![中文图片](/assets/%E4%B8%AD%E6%96%87%E5%9B%BE%E7%89%87.png)');
+  });
+
+  it('should not convert in code block or inline code', () => {
+    const markdown = `# Quest: Code
+id: code
+
+\`\`\`
+![[foo.png]]
+\`\`\`
+
+This is \`![[bar.jpg]]\` and ![[baz.svg]]`;
+    const result = convertObsidianLinks(markdown);
+    expect(result).toContain('```\n![[foo.png]]\n```');
+    expect(result).toContain('`![[bar.jpg]]`');
+    expect(result).toContain('![baz](/assets/baz.svg)');
+  });
+
+  it('should not convert non-image obsidian links', () => {
+    const markdown = `# Quest: Not Image
+id: not-img
+
+![[foo.pdf]] ![[bar.txt]]`;
+    const result = convertObsidianLinks(markdown);
+    expect(result).toContain('![[foo.pdf]]');
+    expect(result).toContain('![[bar.txt]]');
+  });
+});
