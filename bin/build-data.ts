@@ -1,8 +1,8 @@
-import { read, readFileSync } from "fs"
-import { findQuestCanvases, convertQuestCanvas, JourneySchema, QuestSchema, convertJourneyCanvas} from "../src"
+import { readFileSync } from "fs"
+import { JourneySchema, QuestSchema, convertJourneyCanvas } from "../src"
 import { readdirSync } from "fs"
 import path from "path"
-import { isJourneyCanvasAvailable } from "../src/extract-content"
+import { isJourneyCanvasAvailable, findQuestMarkdown } from "../src/extract-content"
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { JourneyShortSchema } from '../src/schemas';
 import { convertQuestMarkdown } from '../src/convert-quest-markdown';
@@ -20,29 +20,36 @@ export function buildJourneyData(journeyPath: string): {
 } {
     // Read journeyPath and jsonify it
     const journeyCanvas = JSON.parse(readFileSync(journeyPath, 'utf8'))
-    const questPaths = findQuestCanvases(journeyCanvas)
+    const questPaths = findQuestMarkdown(journeyCanvas)
 
     const pathQuestMap: Record<string, QuestSchema> = {}
 
     questPaths.forEach(questPath => {
-        const questCanvas = JSON.parse(readFileSync(questPath, 'utf8'))
-        const quest = convertQuestCanvas(questCanvas)
-        pathQuestMap[questPath] = quest
+        try {
+            // 读取 quest.md 文件
+            const markdownContent = readFileSync(questPath, 'utf8');
+            const quest = convertQuestMarkdown(markdownContent);
+            pathQuestMap[questPath] = quest;
+        } catch (error) {
+            console.warn(`Warning: Failed to process ${questPath}`, error);
+        }
     })
 
     const journey = convertJourneyCanvas(journeyCanvas, pathQuestMap)
 
-    // console.log(journey.questShortMap)
-
     // Copy dependency information from journey to pathQuestMap
     Object.values(pathQuestMap).forEach(quest => {
-        quest.dependentQuests = [...journey.questShortMap[quest.id].dependentQuests]
-        quest.childQuests = [...journey.questShortMap[quest.id].childQuests]
+        if (journey.questShortMap[quest.id]) {
+            quest.dependentQuests = [...journey.questShortMap[quest.id].dependentQuests]
+            quest.childQuests = [...journey.questShortMap[quest.id].childQuests]
+        }
     })
 
     return {
         journey,
-        quests: questPaths.map(path => pathQuestMap[path])
+        quests: questPaths
+            .filter(path => pathQuestMap[path]) // 过滤掉加载失败的 quest
+            .map(path => pathQuestMap[path])
     }
 }
 
@@ -110,49 +117,6 @@ function buildJourneyShortsFromJourneys(journeys: JourneySchema[]): JourneyShort
     return journeys.map(({ questShortMap, ...journeyShort }) => journeyShort);
 }
 
-/**
- * Build demo quest data from a demo quest canvas file.
- * @param rootDir - The root directory where the demo quest canvas file is located.
- * @param outputDir - The directory to output the demo quest data to.
- * @returns The demo quest data.
- */
-export function buildDemoQuest(rootDir: string, outputDir: string = 'data'): QuestSchema {
-    // Ensure output directory exists
-    if (!existsSync(outputDir)) {
-        mkdirSync(outputDir);
-    }
-
-    // Create a demo directory in the output directory
-    const demoDir = path.join(outputDir, 'demo');
-    if (!existsSync(demoDir)) {
-        mkdirSync(demoDir);
-    }
-
-    // Direct path to the demo quest canvas file
-    const demoQuestPath = path.join(rootDir, 'Demo.quest.canvas');
-    
-    if (!existsSync(demoQuestPath)) {
-        throw new Error(`Demo quest canvas file not found at ${demoQuestPath}`);
-    }
-
-    try {
-        // Read and parse the demo quest canvas file
-        const demoQuestCanvas = JSON.parse(readFileSync(demoQuestPath, 'utf8'));
-        const demoQuest = convertQuestCanvas(demoQuestCanvas);
-
-        // Save the demo quest data with the simplified name
-        writeFileSync(
-            path.join(demoDir, 'quest-demo.json'),
-            JSON.stringify(demoQuest, null, 2)
-        );
-
-        console.log(`Demo quest data built successfully: ${demoQuest.name}`);
-        return demoQuest;
-    } catch (error) {
-        console.error(`Error building demo quest data: ${error}`);
-        throw error; // Re-throw the error to propagate it
-    }
-}
 
 export function buildAllSoloQuestData(rootDir: string, outputDir: string = 'data'): void {
     const soloQuestDir = path.join(rootDir, 'soloquests');
@@ -211,29 +175,26 @@ export function buildDatabase(rootDir: string, outputDir: string = 'data'): void
         mkdirSync(outputDir);
     }
 
-    // Use recursive function to find all available journey files
-    const journeyFiles = findAllAvailableJourneyFilesRecursive(rootDir);
-    const allJourneys: JourneySchema[] = [];
+    // // Use recursive function to find all available journey files
+    // const journeyFiles = findAllAvailableJourneyFilesRecursive(rootDir);
+    // const allJourneys: JourneySchema[] = [];
 
-    // Process each journey file
-    journeyFiles.forEach(journeyFile => {
-        // Reuse buildJourneyDataFiles to generate files for a single journey
-        buildJourneyDataFiles(journeyFile, outputDir);
+    // // Process each journey file
+    // journeyFiles.forEach(journeyFile => {
+    //     // Reuse buildJourneyDataFiles to generate files for a single journey
+    //     buildJourneyDataFiles(journeyFile, outputDir);
 
-        // Collect journey information for generating journeys.json
-        const { journey } = buildJourneyData(journeyFile);
-        allJourneys.push(journey);
-    });
+    //     // Collect journey information for generating journeys.json
+    //     const { journey } = buildJourneyData(journeyFile);
+    //     allJourneys.push(journey);
+    // });
 
-    // Generate and save journeys.json
-    const journeyShorts = buildJourneyShortsFromJourneys(allJourneys);
-    writeFileSync(
-        path.join(outputDir, 'journeys.json'),
-        JSON.stringify(journeyShorts, null, 2)
-    );
-
-    // Build demo quest data
-    buildDemoQuest(rootDir, outputDir);
+    // // Generate and save journeys.json
+    // const journeyShorts = buildJourneyShortsFromJourneys(allJourneys);
+    // writeFileSync(
+    //     path.join(outputDir, 'journeys.json'),
+    //     JSON.stringify(journeyShorts, null, 2)
+    // );
 
     // Build solo quests data
     buildAllSoloQuestData(rootDir, outputDir);

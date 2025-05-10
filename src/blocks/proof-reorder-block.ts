@@ -1,6 +1,5 @@
-import { RawData, convertRawContent } from "../convert-helper";
 import { BlockSchema } from "../schemas";
-import { extractProperties, MarkdownBlock, checkRequiredProperties } from "../convert-markdown-helper";
+import { extractProperties, MarkdownBlock } from "../convert-markdown-helper";
 
 export const ProofReorderType = 'PROOF_REORDER' as const;
 
@@ -73,54 +72,6 @@ export class ProofReorderBlock implements BlockSchema {
   }
 
   /**
-   * Block node template:
-   * 
-   * {content}
-   * 
-   * part-1:
-   * {part-1 content}
-   * 
-   * part-2:
-   * {part-2 content}
-   * 
-   * part-3:
-   * {part-3 content}
-   * 
-   * question-order:
-   * 3,1,2
-   * 
-   */
-  static fromNode(rawData: RawData): ProofReorderBlock {
-    const keywords = [
-      { pattern: 'question-order:', name: 'questionOrder' },
-      { pattern: /part-\d+:/, name: 'parts' },
-    ];
-    const converted = convertRawContent(rawData.rawContent, keywords);
-    const questionOrder = converted.questionOrder as string;
-    const parts = Array.isArray(converted.parts) ? converted.parts : [converted.parts];
-    const blockContent = converted.content as string;
-
-    const questionOrderArray = questionOrder.trim().split(',');
-    const cleanOrderArray = questionOrderArray.map(s => s.trim());
-    
-    const block = new ProofReorderBlock(
-      rawData.id,
-      blockContent,
-      {
-        orderItems: parts.map((part, index) => ({
-          id: `${index + 1}`,
-          content: part,
-        })),
-        questionOrder: cleanOrderArray.join(','),
-      },
-      rawData.name
-    );
-
-    this.validate(block); // Validate the constructed block
-    return block;
-  }
-
-  /**
    * Markdown format for proof reorder block
    * 
    * {content}
@@ -167,10 +118,6 @@ export class ProofReorderBlock implements BlockSchema {
     this.validate(newBlock); // Validate the constructed block
     return newBlock;
   }
-}
-
-export function convertProofReorderBlockNode(rawData: RawData): ProofReorderBlock {
-  return ProofReorderBlock.fromNode(rawData);
 }
 
 export function convertProofReorderMarkdown(markdown: MarkdownBlock): ProofReorderBlock {

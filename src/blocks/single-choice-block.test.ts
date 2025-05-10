@@ -3,453 +3,132 @@ import { marked } from "marked";
 import { 
   SingleChoiceBlock,
   SingleChoiceType,
-  convertSingleChoiceBlockNode,
   convertSingleChoiceMarkdown
 } from "./single-choice-block";
-import { RawData } from "../convert-helper";
 import { MarkdownBlock } from "../convert-markdown-helper";
+import { Token } from 'marked';
 
 describe('SingleChoiceBlock', () => {
-    it('should convert single choice block node raw data', () => {
-        const rawData: RawData = { 
-          id: 'fake-id', 
-          tag: 'single_choice', 
-          rawContent: `
-    What is 2+2?
-    
-    choices:
-    a: 3
-    b: 4
-    c: 5
-    
-    answer:
-    b
-    
-    explanation:
-    Because 2+2=4`
-        };
-        
-        const block = convertSingleChoiceBlockNode(rawData);
-        expect(block).toMatchObject({
-          content: 'What is 2+2?',
-          type: SingleChoiceType,
-          questionData: expect.any(Object),
-          id: rawData.id,
-        });
-    
-        // 验证 questionData 是否正确解析
-        expect(block.questionData).toEqual({
-          choices: [
-            { key: 'a', content: '3' },
-            { key: 'b', content: '4' },
-            { key: 'c', content: '5' }
-          ],
-          answer: 'b',
-          explanation: 'Because 2+2=4'
-        });
-    });
-    
-    it('should throw error if choices key is misspelled as "choice"', () => {
-        const rawData: RawData = {
-          id: 'fake-id-error-1',
-          tag: 'single_choice',
-          rawContent: `
-    What is 2+2?
-    
-    choice:
-    a: 3
-    b: 4
-    c: 5
-    
-    answer:
-    b
-    
-    explanation:
-    Because 2+2=4`
-        };
-
-        expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
-    });
-    
-    it('should throw error if answer field is missing', () => {
-        const rawData: RawData = {
-          id: 'fake-id-error-2',
-          tag: 'single_choice',
-          rawContent: `
-    What is 2+2?
-    
-    choices:
-    a: 3
-    b: 4
-    c: 5
-    
-    explanation:
-    Because 2+2=4`
-        };
-
-        expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
-    });
-    
-    it('should throw error if explanation key is misspelled as "explain"', () => {
-        const rawData: RawData = {
-          id: 'fake-id-error-3',
-          tag: 'single_choice',
-          rawContent: `
-    What is 2+2?
-    
-    choices:
-    a: 3
-    b: 4
-    c: 5
-    
-    answer:
-    b
-    
-    explain:
-    Because 2+2=4`
-        };
-
-        expect(() => convertSingleChoiceBlockNode(rawData)).toThrow(Error);
-    });
-    
-    it('should handle choices with colons in their content', () => {
-        const rawData: RawData = {
-          id: 'fake-id-with-colons',
-          tag: 'single_choice',
-          rawContent: `
-    What is the correct syntax for defining a constant in JavaScript?
-    
-    choices:
-    a: var x = 10
-    b: let x = 10
-    c: const x = 10
-    d: x: 10
-    e: Choice with: colon in the middle
-    f: Choice with multiple: colons: in content
-    
-    answer:
-    c
-    
-    explanation:
-    The const keyword is used to define constants in JavaScript.`
-        };
-        
-        const block = convertSingleChoiceBlockNode(rawData);
-        
-        // Verify that choices with colons are parsed correctly
-        expect(block.questionData.choices).toEqual([
-          { key: 'a', content: 'var x = 10' },
-          { key: 'b', content: 'let x = 10' },
-          { key: 'c', content: 'const x = 10' },
-          { key: 'd', content: 'x: 10' },
-          { key: 'e', content: 'Choice with: colon in the middle' },
-          { key: 'f', content: 'Choice with multiple: colons: in content' }
-        ]);
-    });
-
-    describe('fromNode', () => {
-        it('should convert raw data to single choice block', () => {
-            const rawData: RawData = {
-                id: 'test-id',
+    describe('fromMarkdown method', () => {
+        it('should correctly parse markdown content with properties', () => {
+            const markdownBlock: MarkdownBlock = {
                 tag: 'single_choice',
-                rawContent: `What is 2+2?
-
-choices:
-a: 3
-b: 4
-c: 5
-
-answer:
-b
-
-explanation:
-Basic arithmetic`
-            };
-
-            const result = SingleChoiceBlock.fromNode(rawData);
-
-            expect(result).toBeInstanceOf(SingleChoiceBlock);
-            expect(result).toMatchObject({
-                id: 'test-id',
-                content: 'What is 2+2?',
-                type: SingleChoiceType,
-                questionData: {
-                    choices: [
-                        { key: 'a', content: '3' },
-                        { key: 'b', content: '4' },
-                        { key: 'c', content: '5' }
-                    ],
-                    answer: 'b',
-                    explanation: 'Basic arithmetic'
-                }
-            });
-            expect(result.updatedAt).toBeInstanceOf(Date);
-        });
-
-        it('should handle raw data with name', () => {
-            const rawData: RawData = {
-                id: 'test-id',
-                tag: 'single_choice',
-                name: 'Test Name',
-                rawContent: `What is 2+2?
-
-choices:
-a: 3
-b: 4
-
-answer:
-b
-
-explanation:
-Basic arithmetic`
-            };
-
-            const result = SingleChoiceBlock.fromNode(rawData);
-
-            expect(result).toMatchObject({
-                id: 'test-id',
-                name: 'Test Name',
-                content: 'What is 2+2?',
-                type: SingleChoiceType
-            });
-        });
-
-        it('should throw error when choices are missing', () => {
-            const rawData: RawData = {
-                id: 'test-id',
-                tag: 'single_choice',
-                rawContent: `What is 2+2?
-
-answer:
-b
-
-explanation:
-Basic arithmetic`
-            };
-
-            expect(() => SingleChoiceBlock.fromNode(rawData)).toThrow('choices section is required');
-        });
-    });
-
-    describe('fromMarkdown', () => {
-        it('should convert markdown to single choice block', () => {
-            const markdown = `What is 2+2?
-
-#### Choices
-a: 3
-b: 4
-c: 5
-
-#### Answer
-b
-
-#### Explanation
-Basic arithmetic`;
-
-            const tokens = marked.lexer(markdown);
-            const blockRaw: MarkdownBlock = {
-                id: 'test-id',
-                rawTokens: tokens,
-                tag: 'single-choice'
-            };
-
-            const result = SingleChoiceBlock.fromMarkdown(blockRaw);
-
-            expect(result).toMatchObject({
-                id: 'test-id',
-                content: 'What is 2+2?',
-                type: SingleChoiceType,
-                questionData: {
-                    choices: [
-                        { key: 'a', content: '3' },
-                        { key: 'b', content: '4' },
-                        { key: 'c', content: '5' }
-                    ],
-                    answer: 'b',
-                    explanation: 'Basic arithmetic'
-                }
-            });
-        });
-
-        it('should handle markdown with name', () => {
-            const markdown = `What is 2+2?
-
-#### Choices
-a: 3
-b: 4
-c: 5
-
-#### Answer
-b
-
-#### Explanation
-Basic arithmetic`;
-
-            const tokens = marked.lexer(markdown);
-            const blockRaw: MarkdownBlock = {
                 id: 'test-id',
                 name: 'Test Question',
-                rawTokens: tokens,
-                tag: 'single-choice'
+                rawTokens: [
+                    { type: 'paragraph', text: 'This is a test question.', tokens: [] , raw: 'This is a test question.'} as Token,
+                    { type: 'heading', text: 'Choices', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'a: First choice\nb: Second choice\nc: Third choice', tokens: [] , raw: 'a: First choice\nb: Second choice\nc: Third choice'} as Token,
+                    { type: 'heading', text: 'Answer', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'b', tokens: [] , raw: 'b'} as Token,
+                    { type: 'heading', text: 'Explanation', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'The explanation text.', tokens: [] , raw: 'The explanation text.'} as Token,
+                ]
             };
 
-            const result = SingleChoiceBlock.fromMarkdown(blockRaw);
+            const block = SingleChoiceBlock.fromMarkdown(markdownBlock);
+            
+            expect(block.id).toBe('test-id');
+            expect(block.name).toBe('Test Question');
+            expect(block.content).toBe('This is a test question.');
+            expect(block.questionData.choices.length).toBe(3);
+            expect(block.questionData.choices[0].key).toBe('a');
+            expect(block.questionData.choices[0].content).toBe('First choice');
+            expect(block.questionData.choices[1].key).toBe('b');
+            expect(block.questionData.choices[1].content).toBe('Second choice');
+            expect(block.questionData.choices[2].key).toBe('c');
+            expect(block.questionData.choices[2].content).toBe('Third choice');
+            expect(block.questionData.answer).toBe('b');
+            expect(block.questionData.explanation).toBe('The explanation text.');
+        });
 
-            expect(result).toMatchObject({
+        it('should handle choices with complex content', () => {
+            const markdownBlock: MarkdownBlock = {
+                tag: 'single_choice',
                 id: 'test-id',
                 name: 'Test Question',
-                content: 'What is 2+2?',
-                type: SingleChoiceType,
-                questionData: {
-                    choices: [
-                        { key: 'a', content: '3' },
-                        { key: 'b', content: '4' },
-                        { key: 'c', content: '5' }
-                    ],
-                    answer: 'b',
-                    explanation: 'Basic arithmetic'
-                }
-            });
-        });
-    });
-
-    describe('getText', () => {
-        it('should return formatted text content', () => {
-            const block = new SingleChoiceBlock(
-                'test-id',
-                'What is 2+2?',
-                {
-                    choices: [
-                        { key: 'a', content: '3' },
-                        { key: 'b', content: '4' },
-                        { key: 'c', content: '5' }
-                    ],
-                    answer: 'b',
-                    explanation: 'Basic arithmetic'
-                },
-                'Basic Math Question'
-            );
-
-            const text = block.getText();
-            expect(text).toBe(`Single Choice Question: Basic Math Question
-What is 2+2?
-
-choices:
-a: 3
-b: 4
-c: 5
-
-answer:
-b
-
-explanation:
-Basic arithmetic
----`);
-        });
-
-        it('should handle empty content', () => {
-            const block = new SingleChoiceBlock(
-                'test-id',
-                '',
-                {
-                    choices: [
-                        { key: 'a', content: '3' },
-                        { key: 'b', content: '4' }
-                    ],
-                    answer: 'b',
-                    explanation: 'Basic arithmetic'
-                }
-            );
-
-            const text = block.getText();
-            const expected = "Single Choice Question: undefined\n\n\nchoices:\na: 3\nb: 4\n\nanswer:\nb\n\nexplanation:\nBasic arithmetic\n---";
-            expect(text).toBe(expected);
-        });
-
-        it('should handle block with name', () => {
-            const block = new SingleChoiceBlock(
-                'test-id',
-                'Test question content',
-                {
-                    choices: [
-                        { key: 'a', content: 'Option A' },
-                        { key: 'b', content: 'Option B' },
-                    ],
-                    answer: 'a',
-                    explanation: 'Option A is correct'
-                },
-                'Question Title'
-            );
-
-            const text = block.getText();
-            expect(text).toBe(`Single Choice Question: Question Title
-Test question content
-
-choices:
-a: Option A
-b: Option B
-
-answer:
-a
-
-explanation:
-Option A is correct
----`);
-        });
-    });
-
-    describe('compatibility functions', () => {
-        it('should work with convertSingleChoiceBlockNode', () => {
-            const rawData: RawData = {
-                id: 'test-id',
-                tag: 'single_choice',
-                rawContent: `What is 2+2?
-
-choices:
-a: 3
-b: 4
-
-answer:
-b
-
-explanation:
-Basic arithmetic`
+                rawTokens: [
+                    { type: 'paragraph', text: 'This is a test question.', tokens: [] } as Token,
+                    { type: 'heading', text: 'Choices', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'a: Choice with $\\alpha$\nb: Choice with: colon inside\nc: Choice with more: colons: here', tokens: [] } as Token,
+                    { type: 'heading', text: 'Answer', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'b', tokens: [] } as Token,
+                    { type: 'heading', text: 'Explanation', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'The explanation.', tokens: [] } as Token,
+                ]
             };
 
-            const result = convertSingleChoiceBlockNode(rawData);
-
-            expect(result).toBeInstanceOf(SingleChoiceBlock);
-            expect(result).toMatchObject({
-                id: 'test-id',
-                type: SingleChoiceType
-            });
+            const block = SingleChoiceBlock.fromMarkdown(markdownBlock);
+            
+            expect(block.questionData.choices.length).toBe(3);
+            expect(block.questionData.choices[0].content).toBe('Choice with $\\alpha$');
+            expect(block.questionData.choices[1].content).toBe('Choice with: colon inside');
+            expect(block.questionData.choices[2].content).toBe('Choice with more: colons: here');
         });
 
         it('should work with convertSingleChoiceMarkdown', () => {
             const markdownBlock: MarkdownBlock = {
-                tag: 'single-choice',
+                tag: 'single_choice',
                 id: 'test-id',
-                rawTokens: marked.lexer(`#### Content
-Question
-
-#### Choices
-a: First
-b: Second
-
-#### Answer
-b
-
-#### Explanation
-Because`)
+                name: 'Test Question',
+                rawTokens: [
+                    { type: 'paragraph', text: 'This is a test question.', tokens: [] } as Token,
+                    { type: 'heading', text: 'Choices', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'a: First choice\nb: Second choice\nc: Third choice', tokens: [] } as Token,
+                    { type: 'heading', text: 'Answer', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'b', tokens: [] } as Token,
+                    { type: 'heading', text: 'Explanation', depth: 4 } as Token,
+                    { type: 'paragraph', text: 'The explanation text.', tokens: [] } as Token,
+                ]
             };
 
             const result = convertSingleChoiceMarkdown(markdownBlock);
+            expect(result.id).toBe('test-id');
+            expect(result.type).toBe('SINGLE_CHOICE');
+        });
+    });
 
-            expect(result).toBeInstanceOf(SingleChoiceBlock);
-            expect(result).toMatchObject({
-                id: 'test-id',
-                type: SingleChoiceType
-            });
+    describe('validate method', () => {
+        it('should throw error if choices is empty', () => {
+            const block = new SingleChoiceBlock(
+                'test-id',
+                'Test content',
+                {
+                    choices: [],
+                    answer: 'a',
+                    explanation: 'Explanation'
+                }
+            );
+            
+            expect(() => SingleChoiceBlock.validate(block)).toThrow('Choices cannot be empty');
+        });
+        
+        it('should throw error if answer is empty', () => {
+            const block = new SingleChoiceBlock(
+                'test-id',
+                'Test content',
+                {
+                    choices: [{ key: 'a', content: 'Choice A' }],
+                    answer: '',
+                    explanation: 'Explanation'
+                }
+            );
+            
+            expect(() => SingleChoiceBlock.validate(block)).toThrow('Answer is required');
+        });
+        
+        it('should throw error if answer is not in choices', () => {
+            const block = new SingleChoiceBlock(
+                'test-id',
+                'Test content',
+                {
+                    choices: [{ key: 'a', content: 'Choice A' }],
+                    answer: 'b',
+                    explanation: 'Explanation'
+                }
+            );
+            
+            expect(() => SingleChoiceBlock.validate(block)).toThrow('Answer "b" is not a valid choice key');
         });
     });
 });

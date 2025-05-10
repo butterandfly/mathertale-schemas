@@ -12,32 +12,32 @@ program
   .description('CLI tool for building Mathertale projects')
   .version('1.0.0');
 
-program
-  .command('journey')
-  .description('Build journey canvas file')
-  .argument('<file>', 'Journey canvas file path')
-  .option('-o, --output <dir>', 'Output directory')
-  .action(async (file, options) => {
-    const spinner = ora('Building journey...').start();
+// program
+//   .command('journey')
+//   .description('Build journey canvas file')
+//   .argument('<file>', 'Journey canvas file path')
+//   .option('-o, --output <dir>', 'Output directory')
+//   .action(async (file, options) => {
+//     const spinner = ora('Building journey...').start();
 
-    try {
-      // 验证输入文件
-      if (!file.endsWith('.journey.canvas')) {
-        throw new Error('Input file must end with .journey.canvas');
-      }
+//     try {
+//       // 验证输入文件
+//       if (!file.endsWith('.journey.canvas')) {
+//         throw new Error('Input file must end with .journey.canvas');
+//       }
 
-      // 确定输出目录
-      const outputDir = options.output || 'output';
+//       // 确定输出目录
+//       const outputDir = options.output || 'output';
       
-      // 构建journey数据文件
-      buildJourneyDataFiles(file, outputDir);
+//       // 构建journey数据文件
+//       buildJourneyDataFiles(file, outputDir);
 
-      spinner.succeed(chalk.green('Journey built successfully!'));
-    } catch (error: any) {
-      spinner.fail(chalk.red(`Build failed: ${error.message}`));
-      process.exit(1);
-    }
-  });
+//       spinner.succeed(chalk.green('Journey built successfully!'));
+//     } catch (error: any) {
+//       spinner.fail(chalk.red(`Build failed: ${error.message}`));
+//       process.exit(1);
+//     }
+//   });
 
 program
   .command('db')

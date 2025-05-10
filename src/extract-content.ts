@@ -1,21 +1,5 @@
-import { convertContradictionBlockNode } from './blocks/contradiction-block';
-import { convertDefinitionBlockNode, convertFactBlockNode, convertLemmaBlockNode, convertPropositionBlockNode, convertRemarkBlockNode, convertTheoremBlockNode } from './blocks/noted-block';
-import { convertParaBlockNode } from './blocks/para-block';
-import { convertProofReorderBlockNode } from './blocks/proof-reorder-block';
-import { convertScratchWorkBlockNode } from './blocks/scratch-work-block';
-import { convertSingleChoiceBlockNode } from './blocks/single-choice-block';
-import { convertRawContent } from './convert-helper';
-import {
-  CanvasNode,
-  CanvasData,
-  getMetadata,
-  RawData,
-  BlockNodeConverter
-} from './convert-helper';
 
 import {
-  BlockSchema,
-  SectionSchema,
   QuestSchema,
   JourneySchema,
   QuestShortSchema,
@@ -23,81 +7,53 @@ import {
   DevStatus,
 } from './schemas';
 
-const tagBlockMap: Record<string, BlockNodeConverter> = {
-  'para': convertParaBlockNode,
-  'definition': convertDefinitionBlockNode,
-  'fact': convertFactBlockNode,
-  'theorem': convertTheoremBlockNode,
-  'proposition': convertPropositionBlockNode,
-  'remark': convertRemarkBlockNode,
-  'lemma': convertLemmaBlockNode,
-  'single_choice': convertSingleChoiceBlockNode,
-  'scratch_work': convertScratchWorkBlockNode,
-  'proof_reorder': convertProofReorderBlockNode,
-  'contradiction': convertContradictionBlockNode,
+
+export interface CanvasNode {
+  id: string;
+  type: string;
+  text?: string;
+  file?: string;
+}
+
+export interface CanvasEdge {
+  fromNode: string;
+  toNode: string;
+  fromSide: string;
+  toSide: string;
+}
+
+export interface CanvasData {
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
 }
 
 
-export function convertBlockNode(blockNode: CanvasNode): BlockSchema {
-  if (!blockNode.text) {
-    throw new Error('Block text is required');
-  }
-  
-  const text = blockNode.text.trim();
-  const firstLine = text.split('\n')[0];
-  const {tag, name, id} = getMetadata(firstLine);
-  if (!id) {
-    throw new Error('Block id is required: ' + firstLine);
-  }
-
-  const content = text.split('\n').slice(1).join('\n').trim();
-
-  const rawData: RawData = {
-    id,
-    tag,
-    name,
-    rawContent: content
-  }
-
-  if (!tagBlockMap[tag]) {
-    throw new Error('Invalid block tag: ' + tag);
-  }
-
-  const block = tagBlockMap[tag](rawData);
-  
-  return block;
+export interface Metadata {
+  tag: string;
+  name: string;
+  id: string;
 }
 
 
-
-export function convertSectionNode(sectionNode: CanvasNode, canvasData: CanvasData): SectionSchema {
-  if (!sectionNode.text) {
-    throw new Error('Section text is required');
-  }
-
-  const lines = sectionNode.text.trim().split('\n');
-  const firstLine = lines[0];
-  const {tag, name, id} = getMetadata(firstLine);
-  
-  if (tag !== 'section') {
-    throw new Error('Invalid section tag: ' + tag);
-  }
-
-  const section: SectionSchema = {
-    name,
-    blocks: [],
-  };
-
-  let currentBlockNode = findNextBlockNode(sectionNode, canvasData);
-  while (currentBlockNode) {
-    const block = convertBlockNode(currentBlockNode);
-    section.blocks.push(block);
-    currentBlockNode = findNextBlockNode(currentBlockNode, canvasData);
-  }
-
-  return section;
+export function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 }
 
+export function getMetadata(line: string): Metadata {
+  const parts = line.trim().split(' ');
+  const tag = parts[0].replace('#', '');
+
+  let id = '';
+  const lastPart = parts[parts.length - 1];
+  if (lastPart.startsWith('^') && isValidUUID(lastPart.replace('^', ''))) {
+    id = lastPart.replace('^', '');
+    parts.pop();
+  }
+
+  const name = parts.slice(1).join(' ');
+  return { tag, name, id };
+}
 
 
 function findJourneyNode(canvasData: CanvasData): CanvasNode | undefined {
@@ -191,97 +147,20 @@ export function convertJourneyCanvas(
   return journey;
 }
 
-// Find the next section node.
-// The current node should be a section node or a quest node.
-export function findNextSectionNode(currentNode: CanvasNode, canvasData: CanvasData): CanvasNode | null {
-  const edge = canvasData.edges.find(edge => 
-    edge.fromNode === currentNode.id && 
-    edge.fromSide === 'right' && 
-    edge.toSide === 'left'
-  );
-  return edge ? canvasData.nodes.find(node => node.id === edge.toNode) || null : null;
-}
-
-// Find the next block node.
-// The current node should be a block node or a section node.
-export function findNextBlockNode(currentNode: CanvasNode, canvasData: CanvasData): CanvasNode | null {
-  const edge = canvasData.edges.find(edge => 
-    edge.fromNode === currentNode.id && 
-    edge.fromSide === 'bottom' && 
-    edge.toSide === 'top'
-  );
-  return edge ? canvasData.nodes.find(node => node.id === edge.toNode) || null : null;
-}
-
 /**
- * Find all quest canvas file paths in the journey.
- * Quest canvas files are named with the format `*.quest.canvas`.
+ * Find all quest markdown file paths in the journey.
+ * Quest markdown files are named with the format `*.quest.md`.
  * @param journeyCanvas Journey canvas data
- * @returns quest canvas file paths
+ * @returns quest markdown file paths
  */
-export function findQuestCanvases(journeyCanvas: CanvasData): string[] {
+export function findQuestMarkdown(journeyCanvas: CanvasData): string[] {
   return journeyCanvas.nodes
     .filter(node => 
       node.type === 'file' && 
       node.file && 
-      node.file.endsWith('.quest.canvas')
+      node.file.endsWith('.quest.md')
     )
     .map(node => node.file as string);
-}
-
-export function convertQuestNode(questNode: CanvasNode, canvasData: CanvasData): QuestSchema {
-  if (!questNode.text) {
-    throw new Error('Quest text is required');
-  }
-
-  const lines = questNode.text.split('\n');
-  const firstLine = lines[0];
-  const {tag, name, id} = getMetadata(firstLine);
-  if (!id) {
-    throw new Error('Quest id is required: ' + firstLine);
-  }
-
-  if (tag !== 'quest') {
-    throw new Error('Invalid quest tag: ' + tag);
-  }
-
-  const quest: QuestSchema = {
-    name,
-    id,
-    desc: lines.slice(1).join('\n'),
-    blockCount: 0,
-    sections: [],
-    updatedAt: new Date(),
-    dependentQuests: [],
-    childQuests: []
-  };
-
-  let currentSectionNode = findNextSectionNode(questNode, canvasData);
-  while (currentSectionNode) {
-    const section = convertSectionNode(currentSectionNode, canvasData);
-    quest.sections.push(section);
-    currentSectionNode = findNextSectionNode(currentSectionNode, canvasData);
-  }
-
-  // 计算 blockCount
-  quest.blockCount = quest.sections.reduce((count, section) => {
-    return count + section.blocks.length;
-  }, 0);
-
-  return quest;
-}
-
-/**
- * Convert a quest canvas to a quest schema.
- * @param canvasData Quest canvas data
- * @returns Quest schema, with empty dependentQuests and childQuests
- */
-export function convertQuestCanvas(canvasData: CanvasData): QuestSchema {
-  const questNode = findQuestNode(canvasData);
-  if (!questNode) {
-    throw new Error('Quest node not found in canvas data');
-  }
-  return convertQuestNode(questNode, canvasData);
 }
 
 /**
@@ -305,15 +184,16 @@ export function extractDataFromJourneyNode(journeyNode: CanvasNode): JourneySche
     throw new Error('Journey name is required: ' + journeyNode.text);
   }
 
-  const rawContent = lines.slice(1).join('\n').trim();
-  const keywords = [
-    { pattern: 'category:', name: 'category' },
-    { pattern: 'devStatus:', name: 'devStatus' }
-  ]
-  const converted = convertRawContent(rawContent, keywords);
-  const desc = converted.content as string;
-  const category = converted.category as string;
-  const devStatus = converted.devStatus as string;
+  const dataMap: Record<string, string> = {};
+  lines.slice(1).forEach(line => {
+    const key = line.split(':')[0].trim();
+    const value = line.split(':')[1].trim();
+    dataMap[key] = value;
+  });
+
+  const desc = dataMap['desc'] as string;
+  const category = dataMap['category'] as string;
+  const devStatus = dataMap['devStatus'] as string;
 
   const categoryMap: Record<string, Category> = {
     'foundational': Category.FOUNDATIONAL,

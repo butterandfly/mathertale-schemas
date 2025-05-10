@@ -1,4 +1,3 @@
-import { RawData } from '../convert-helper';
 import { BlockSchema } from '../schemas';
 import { extractProperties, MarkdownBlock } from '../convert-markdown-helper';
 
@@ -15,16 +14,6 @@ export class ParaBlock implements BlockSchema {
 
     getText(): string {
         return this.content;
-    }
-
-    // 从 RawData 创建实例
-    static fromNode(rawData: RawData): BlockSchema {
-        const block = new ParaBlock(
-            rawData.id,
-            rawData.rawContent
-        );
-        ParaBlock.validate(block); // Use ParaBlock.validate instead of this.validate
-        return block;
     }
 
     static validate(block: ParaBlock): void {
@@ -47,6 +36,4 @@ export class ParaBlock implements BlockSchema {
     }
 }
 
-// 保持原有的导出函数以保持兼容性
-export const convertParaBlockNode = ParaBlock.fromNode;
 export const convertParaMarkdown = ParaBlock.fromMarkdown; 

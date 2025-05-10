@@ -3,113 +3,11 @@ import { marked } from "marked";
 import { 
   ProofReorderBlock,
   ProofReorderType,
-  convertProofReorderBlockNode,
   convertProofReorderMarkdown
 } from "./proof-reorder-block";
-import { RawData } from "../convert-helper";
 import { MarkdownBlock } from "../convert-markdown-helper";
 
 describe('ProofReorderBlock', () => {
-  it('should convert proof reorder block node raw data', () => {
-    const rawData: RawData = { 
-      id: 'fake-id', 
-      tag: 'proof_reorder', 
-      rawContent: `This is the main content.
-
-part-1:
-First part content
-
-part-2:
-Second part content
-
-part-3:
-Third part content
-
-question-order:
-3,1,2`
-    };
-    
-    const block = convertProofReorderBlockNode(rawData);
-    expect(block).toMatchObject({
-      content: 'This is the main content.',
-      type: ProofReorderType,
-      id: rawData.id,
-      questionData: {
-        orderItems: [
-          { id: '1', content: 'First part content' },
-          { id: '2', content: 'Second part content' },
-          { id: '3', content: 'Third part content' }
-        ],
-        questionOrder: '3,1,2'
-      }
-    });
-  });
-
-  describe('fromNode', () => {
-    it('should convert raw data to proof reorder block', () => {
-      const rawData: RawData = {
-        id: 'test-id',
-        tag: 'proof_reorder',
-        rawContent: `Main content
-
-part-1:
-First part
-
-part-2:
-Second part
-
-question-order:
-2,1`
-      };
-
-      const result = ProofReorderBlock.fromNode(rawData);
-
-      expect(result).toBeInstanceOf(ProofReorderBlock);
-      expect(result).toMatchObject({
-        id: 'test-id',
-        content: 'Main content',
-        type: ProofReorderType,
-        questionData: {
-          orderItems: [
-            { id: '1', content: 'First part' },
-            { id: '2', content: 'Second part' }
-          ],
-          questionOrder: '2,1'
-        }
-      });
-      expect(result.updatedAt).toBeInstanceOf(Date);
-    });
-
-    it('should handle raw data with name', () => {
-      const rawData: RawData = {
-        id: 'test-id',
-        name: 'Test Name',
-        tag: 'proof_reorder',
-        rawContent: `Main content
-
-part-1:
-First part
-
-question-order:
-1`
-      };
-
-      const result = ProofReorderBlock.fromNode(rawData);
-
-      expect(result).toMatchObject({
-        id: 'test-id',
-        name: 'Test Name',
-        content: 'Main content',
-        type: ProofReorderType,
-        questionData: {
-          orderItems: [
-            { id: '1', content: 'First part' }
-          ],
-          questionOrder: '1'
-        }
-      });
-    });
-  });
 
   describe('fromMarkdown', () => {
     it('should convert markdown to proof reorder block', () => {
@@ -283,28 +181,7 @@ Second part content
   });
 
   describe('compatibility functions', () => {
-    it('should work with convertProofReorderBlockNode', () => {
-      const rawData: RawData = {
-        id: 'test-id',
-        tag: 'proof_reorder',
-        rawContent: `Main content
-
-part-1:
-First part
-
-question-order:
-1`
-      };
-
-      const result = convertProofReorderBlockNode(rawData);
-
-      expect(result).toBeInstanceOf(ProofReorderBlock);
-      expect(result).toMatchObject({
-        id: 'test-id',
-        type: ProofReorderType
-      });
-    });
-
+    
     it('should work with convertProofReorderMarkdown', () => {
       const markdown = `Main content
 

@@ -5,71 +5,13 @@ import {
     DefinitionType, 
     FactType, 
     TheoremType, 
-    PropositionType, 
     RemarkType, 
     LemmaType,
-    convertDefinitionBlockNode,
     convertDefinitionMarkdown
 } from './noted-block';
-import { RawData } from '../convert-helper';
 import { MarkdownBlock } from '../convert-markdown-helper';
 
 describe('NotedBlock', () => {
-    describe('fromNode', () => {
-        it('should convert raw data to noted block', () => {
-            const rawData: RawData = {
-                id: 'test-id',
-                tag: 'definition',
-                rawContent: 'Test content'
-            };
-
-            const result = NotedBlock.fromNode(rawData, DefinitionType);
-
-            expect(result).toBeInstanceOf(NotedBlock);
-            expect(result).toMatchObject({
-                id: 'test-id',
-                content: 'Test content',
-                type: DefinitionType
-            });
-            expect(result.updatedAt).toBeInstanceOf(Date);
-        });
-
-        it('should handle raw data with name', () => {
-            const rawData: RawData = {
-                id: 'test-id',
-                tag: 'definition',
-                name: 'Test Name',
-                rawContent: 'Test content'
-            };
-
-            const result = NotedBlock.fromNode(rawData, DefinitionType);
-
-            expect(result).toMatchObject({
-                id: 'test-id',
-                content: 'Test content',
-                type: DefinitionType,
-                name: 'Test Name'
-            });
-        });
-
-        it('should throw error if rawContent is empty', () => {
-            const rawData: RawData = {
-                id: 'empty-id',
-                tag: 'definition',
-                rawContent: ''
-            };
-            expect(() => NotedBlock.fromNode(rawData, DefinitionType)).toThrow('Content cannot be empty for block ID: empty-id (Type: DEFINITION)');
-        });
-
-        it('should throw error if rawContent is only whitespace', () => {
-            const rawData: RawData = {
-                id: 'whitespace-id',
-                tag: 'theorem',
-                rawContent: '   \n  '
-            };
-            expect(() => NotedBlock.fromNode(rawData, TheoremType)).toThrow('Content cannot be empty for block ID: whitespace-id (Type: THEOREM)');
-        });
-    });
 
     describe('fromMarkdown', () => {
         it('should convert markdown block to noted block', () => {
@@ -181,39 +123,4 @@ And some math: $$E = mc^2$$`;
         });
     });
 
-    describe('compatibility functions', () => {
-        it('should work with convertDefinitionBlockNode', () => {
-            const rawData: RawData = {
-                id: 'test-id',
-                tag: 'definition',
-                rawContent: 'Test content'
-            };
-
-            const result = convertDefinitionBlockNode(rawData);
-
-            expect(result).toBeInstanceOf(NotedBlock);
-            expect(result).toMatchObject({
-                id: 'test-id',
-                content: 'Test content',
-                type: DefinitionType
-            });
-        });
-
-        it('should work with convertDefinitionMarkdown', () => {
-            const markdownBlock: MarkdownBlock = {
-                tag: 'definition',
-                id: 'test-id',
-                rawTokens: marked.lexer('Test content')
-            };
-
-            const result = convertDefinitionMarkdown(markdownBlock);
-
-            expect(result).toBeInstanceOf(NotedBlock);
-            expect(result).toMatchObject({
-                id: 'test-id',
-                content: 'Test content',
-                type: DefinitionType
-            });
-        });
-    });
 }); 

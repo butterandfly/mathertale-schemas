@@ -1,6 +1,4 @@
-import { RawData } from "../convert-helper";
 import { BlockSchema } from "../schemas";
-import { convertRawContent } from "../convert-helper";
 import { extractProperties, MarkdownBlock, checkRequiredProperties } from '../convert-markdown-helper';
 
 export const SingleChoiceType = 'SINGLE_CHOICE' as const;
@@ -73,52 +71,52 @@ ${this.questionData.explanation}
    * 3. 每个部分都支持多行文本和LaTeX内容
    * 4. 选项格式必须为 "字母: 选项内容"
    */
-  static convertContent(rawContent: string): {
-    blockContent: string, 
-    questionData: SingleChoiceQuestionData
-  } {
-    // 定义关键字模式
-    const keywords = [
-      { pattern: 'choices:', name: 'choices' },
-      { pattern: 'answer:', name: 'answer' },
-      { pattern: 'explanation:', name: 'explanation' }
-    ];
+  // static convertContent(rawContent: string): {
+  //   blockContent: string, 
+  //   questionData: SingleChoiceQuestionData
+  // } {
+  //   // 定义关键字模式
+  //   const keywords = [
+  //     { pattern: 'choices:', name: 'choices' },
+  //     { pattern: 'answer:', name: 'answer' },
+  //     { pattern: 'explanation:', name: 'explanation' }
+  //   ];
     
-    // Use the helper function to extract sections from the raw content
-    const converted = convertRawContent(rawContent, keywords);
-    const choicesRaw = converted.choices as string;
-    const answer = converted.answer as string;
-    const explanation = converted.explanation as string;
-    const blockContent = converted.content as string;
+  //   // Use the helper function to extract sections from the raw content
+  //   const converted = convertRawContent(rawContent, keywords);
+  //   const choicesRaw = converted.choices as string;
+  //   const answer = converted.answer as string;
+  //   const explanation = converted.explanation as string;
+  //   const blockContent = converted.content as string;
 
-    // Process the "choice" section: each line should be in the format "key: value"
-    const choices: Choice[] = [];
+  //   // Process the "choice" section: each line should be in the format "key: value"
+  //   const choices: Choice[] = [];
 
-    if (!choicesRaw) {
-      throw new Error('choices section is required: ' + rawContent);
-    }
+  //   if (!choicesRaw) {
+  //     throw new Error('choices section is required: ' + rawContent);
+  //   }
 
-    choicesRaw.split('\n').forEach(line => {
-      // Split only at the first colon to handle content that may contain colons
-      const colonIndex = line.indexOf(':');
-      if (colonIndex > 0) {
-        const key = line.substring(0, colonIndex).trim();
-        const content = line.substring(colonIndex + 1).trim();
-        if (key && content) {
-          choices.push({ key, content });
-        }
-      }
-    });
+  //   choicesRaw.split('\n').forEach(line => {
+  //     // Split only at the first colon to handle content that may contain colons
+  //     const colonIndex = line.indexOf(':');
+  //     if (colonIndex > 0) {
+  //       const key = line.substring(0, colonIndex).trim();
+  //       const content = line.substring(colonIndex + 1).trim();
+  //       if (key && content) {
+  //         choices.push({ key, content });
+  //       }
+  //     }
+  //   });
     
-    // Assemble the question data
-    const questionData: SingleChoiceQuestionData = {
-      choices,
-      answer: answer ? answer.trim() : '',
-      explanation: explanation ? explanation.trim() : ''
-    };
+  //   // Assemble the question data
+  //   const questionData: SingleChoiceQuestionData = {
+  //     choices,
+  //     answer: answer ? answer.trim() : '',
+  //     explanation: explanation ? explanation.trim() : ''
+  //   };
     
-    return { blockContent, questionData };
-  }
+  //   return { blockContent, questionData };
+  // }
 
   static validate(block: SingleChoiceBlock): void {
     const { choices, answer } = block.questionData;
@@ -137,18 +135,6 @@ ${this.questionData.explanation}
     }
 
     // Explanation is optional, so no validation needed here unless other rules apply.
-  }
-
-  static fromNode(rawData: RawData): SingleChoiceBlock {
-    const { blockContent, questionData } = this.convertContent(rawData.rawContent);
-    const block = new SingleChoiceBlock(
-      rawData.id,
-      blockContent,
-      questionData,
-      rawData.name
-    );
-    this.validate(block); // Validate the constructed block
-    return block;
   }
 
   /**
@@ -207,5 +193,4 @@ ${this.questionData.explanation}
 }
 
 // 导出兼容性函数
-export const convertSingleChoiceBlockNode = SingleChoiceBlock.fromNode.bind(SingleChoiceBlock);
 export const convertSingleChoiceMarkdown = SingleChoiceBlock.fromMarkdown.bind(SingleChoiceBlock);

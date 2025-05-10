@@ -16,7 +16,7 @@
     "preinstall": "npx only-allow pnpm"
   },
   "name": "mathertale-schemas",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Schema definitions and utilities for Mathertale canvas files",
   "repository": {
     "type": "git",

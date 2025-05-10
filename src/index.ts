@@ -1,10 +1,5 @@
 export { 
-    convertQuestNode,
-    convertSectionNode,
-    convertBlockNode,
-    findQuestCanvases,
     convertJourneyCanvas,
-    convertQuestCanvas,
 } from './extract-content';
 
 export { convertQuestMarkdown } from './convert-quest-markdown';
@@ -17,7 +12,7 @@ export {
     getQuestText
 } from './schemas';
 
-export { isValidUUID, Metadata, RawData, BlockNodeConverter } from './convert-helper';
+export { isValidUUID, getMetadata } from './extract-content';
 
 // Blocks 
 export { ParaType, ParaBlock } from './blocks/para-block';
@@ -28,31 +23,16 @@ export {
 } from './blocks/noted-block';
 export { 
     ProofReorderType, OrderItem, ProofReorderBlock,
-    convertProofReorderBlockNode, convertProofReorderMarkdown 
+    convertProofReorderMarkdown 
 } from './blocks/proof-reorder-block';
 export { 
     ScratchWorkType, ScratchWorkBlock,
-    convertScratchWorkBlockNode, convertScratchWorkMarkdown 
+    convertScratchWorkMarkdown 
 } from './blocks/scratch-work-block';
 export { 
     ContradictionType, 
     ContradictionChoice,
     ContradictionQuestionData,
     ContradictionBlock,
-    convertContradictionBlockNode,
     convertContradictionMarkdown 
 } from './blocks/contradiction-block';
-
-// 从 node-validator 导出
-export {
-    isValidNode,
-} from './node-validator';
-
-export type {
-    NodeValidationResult,
-    MarkedNodeType,
-    NodeType,
-    StructuralNodeTag,
-    BlockNodeTag,
-    MarkedNodeTag
-} from './node-validator'; 
