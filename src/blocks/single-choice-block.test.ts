@@ -6,24 +6,30 @@ import {
   convertSingleChoiceMarkdown
 } from "./single-choice-block";
 import { MarkdownBlock } from "../convert-markdown-helper";
-import { Token } from 'marked';
 
 describe('SingleChoiceBlock', () => {
     describe('fromMarkdown method', () => {
         it('should correctly parse markdown content with properties', () => {
+            const markdown = `This is a test question.
+
+#### Choices
+a: First choice
+b: Second choice
+c: Third choice
+
+#### Answer
+b
+
+#### Explanation
+The explanation text.`;
+
+            const tokens = marked.lexer(markdown);
+
             const markdownBlock: MarkdownBlock = {
                 tag: 'single_choice',
                 id: 'test-id',
                 name: 'Test Question',
-                rawTokens: [
-                    { type: 'paragraph', text: 'This is a test question.', tokens: [] , raw: 'This is a test question.'} as Token,
-                    { type: 'heading', text: 'Choices', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'a: First choice\nb: Second choice\nc: Third choice', tokens: [] , raw: 'a: First choice\nb: Second choice\nc: Third choice'} as Token,
-                    { type: 'heading', text: 'Answer', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'b', tokens: [] , raw: 'b'} as Token,
-                    { type: 'heading', text: 'Explanation', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'The explanation text.', tokens: [] , raw: 'The explanation text.'} as Token,
-                ]
+                rawTokens: tokens
             };
 
             const block = SingleChoiceBlock.fromMarkdown(markdownBlock);
@@ -43,19 +49,26 @@ describe('SingleChoiceBlock', () => {
         });
 
         it('should handle choices with complex content', () => {
+            const markdown = `This is a test question.
+
+#### Choices
+a: Choice with $\\alpha$
+b: Choice with: colon inside
+c: Choice with more: colons: here
+
+#### Answer
+b
+
+#### Explanation
+The explanation.`;
+
+            const tokens = marked.lexer(markdown);
+            
             const markdownBlock: MarkdownBlock = {
                 tag: 'single_choice',
                 id: 'test-id',
                 name: 'Test Question',
-                rawTokens: [
-                    { type: 'paragraph', text: 'This is a test question.', tokens: [] } as Token,
-                    { type: 'heading', text: 'Choices', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'a: Choice with $\\alpha$\nb: Choice with: colon inside\nc: Choice with more: colons: here', tokens: [] } as Token,
-                    { type: 'heading', text: 'Answer', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'b', tokens: [] } as Token,
-                    { type: 'heading', text: 'Explanation', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'The explanation.', tokens: [] } as Token,
-                ]
+                rawTokens: tokens
             };
 
             const block = SingleChoiceBlock.fromMarkdown(markdownBlock);
@@ -67,19 +80,26 @@ describe('SingleChoiceBlock', () => {
         });
 
         it('should work with convertSingleChoiceMarkdown', () => {
+            const markdown = `This is a test question.
+
+#### Choices
+a: First choice
+b: Second choice
+c: Third choice
+
+#### Answer
+b
+
+#### Explanation
+The explanation text.`;
+
+            const tokens = marked.lexer(markdown);
+            
             const markdownBlock: MarkdownBlock = {
                 tag: 'single_choice',
                 id: 'test-id',
                 name: 'Test Question',
-                rawTokens: [
-                    { type: 'paragraph', text: 'This is a test question.', tokens: [] } as Token,
-                    { type: 'heading', text: 'Choices', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'a: First choice\nb: Second choice\nc: Third choice', tokens: [] } as Token,
-                    { type: 'heading', text: 'Answer', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'b', tokens: [] } as Token,
-                    { type: 'heading', text: 'Explanation', depth: 4 } as Token,
-                    { type: 'paragraph', text: 'The explanation text.', tokens: [] } as Token,
-                ]
+                rawTokens: tokens
             };
 
             const result = convertSingleChoiceMarkdown(markdownBlock);
